@@ -1,0 +1,12 @@
+# Bỏ qua thư mục thư viện cài đặt và dữ liệu runtime / tệp tải lên
+node_modules/
+uploads/
+data/
+.env
+.env.*
+!.env.example
+
+# Không push các file PDF báo cáo hoặc tài liệu
+*.pdf
+*.pptx
+*.docx
