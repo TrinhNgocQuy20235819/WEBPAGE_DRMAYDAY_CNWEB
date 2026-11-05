@@ -1,0 +1,22 @@
+{
+  "name": "drmayday-patient-backend",
+  "version": "1.0.0",
+  "description": "Backend Phân hệ Bệnh nhân (Đầu việc 2) - Hệ thống Quản lý Khám bệnh & Theo dõi Mề đay (DrMayDay)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node tests/run_all_tests.js"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.3",
+    "uuid": "^11.1.0"
+  }
+}
+
