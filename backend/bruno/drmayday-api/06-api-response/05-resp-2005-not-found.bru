@@ -1,0 +1,35 @@
+meta {
+  name: 05 ApiResponse 2005 Not Found
+  type: http
+  seq: 5
+  tags: [automated]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/endpoint-does-not-exist
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{patientToken}}
+}
+
+script:pre-request {
+  if (!(bru.getVar("patientToken") || bru.getEnvVar("patientToken"))) throw new Error("Missing patientToken; run the prerequisite login or prepare the manual fixture.");
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 404 and ApiResponse 2005", function () {
+    expect(res.getStatus()).to.equal(404);
+    expect(body.code).to.equal(2005);
+    expect(body.message).to.equal("Endpoint not found");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}

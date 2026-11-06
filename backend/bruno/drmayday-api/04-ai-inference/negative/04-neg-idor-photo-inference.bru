@@ -1,0 +1,23 @@
+meta {
+  name: 04 Cross-Patient Photo Inference IDOR Blocked (3106)
+  type: http
+  seq: 4
+  tags: [automated, ai-inference]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/inference
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientBToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 403 and ApiResponse 3106", function () {
+    expect(res.getStatus()).to.equal(403);
+    expect(body.code).to.equal(3106);
+  });
+}

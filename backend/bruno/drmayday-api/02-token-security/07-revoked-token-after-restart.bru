@@ -1,0 +1,46 @@
+meta {
+  name: 07 Revoked Token After Restart
+  type: http
+  seq: 7
+  tags: [manual]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/shared/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{patientTokenA}}
+}
+
+script:pre-request {
+  if ((bru.getVar("runManual") || bru.getEnvVar("runManual")) !== "true") {
+    if (req.getExecutionMode() === "standalone") throw new Error("Set runManual=true after preparing the manual fixture");
+    bru.runner.skipRequest();
+  }
+  else {
+  if (!(bru.getVar("patientTokenA") || bru.getEnvVar("patientTokenA"))) throw new Error("Missing patientTokenA; run the prerequisite login or prepare the manual fixture.");
+  
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 401 and ApiResponse 3008", function () {
+    expect(res.getStatus()).to.equal(401);
+    expect(body.code).to.equal(3008);
+    expect(body.message).to.equal("Phien dang nhap khong hop le hoac da het han");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}
+
+docs {
+  Run BL-01 through BL-05, restart only backend (keep Redis and signing key), then run this request before A expires. Do not log in again.
+}

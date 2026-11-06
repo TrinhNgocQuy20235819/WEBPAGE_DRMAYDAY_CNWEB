@@ -1,0 +1,35 @@
+meta {
+  name: 04 ApiResponse 2002 Malformed Body
+  type: http
+  seq: 4
+  tags: [automated]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: text
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:text {
+  { "phone": 
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 400 and ApiResponse 2002", function () {
+    expect(res.getStatus()).to.equal(400);
+    expect(body.code).to.equal(2002);
+    expect(body.message).to.equal("Invalid parameter format");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}

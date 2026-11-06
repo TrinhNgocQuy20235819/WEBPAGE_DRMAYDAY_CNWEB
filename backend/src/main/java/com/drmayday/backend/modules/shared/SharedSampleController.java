@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/shared")
-@Tag(name = "4. Shared Infrastructure & AI Module", description = "Đầu việc 4: Kho Media S3/MinIO, Firebase Push Notification, Tích hợp AI Inference")
+@Tag(name = "4. Shared Infrastructure & AI Module", description = "Đầu việc 4: Tích hợp AI Inference; Media S3/MinIO và Firebase Push được hoãn")
 public class SharedSampleController {
 
     @GetMapping("/ping")

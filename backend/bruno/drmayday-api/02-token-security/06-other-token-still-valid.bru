@@ -1,0 +1,37 @@
+meta {
+  name: 06 Other Token Still Valid
+  type: http
+  seq: 6
+  tags: [automated]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/shared/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{patientTokenA2}}
+}
+
+script:pre-request {
+  const token = bru.getVar("patientTokenA2") || bru.getEnvVar("patientTokenA2") || bru.getVar("patientToken") || bru.getEnvVar("patientToken");
+  if (!token) throw new Error("Missing patientTokenA2; run 02-token-b-valid-before-logout first.");
+  bru.setVar("patientTokenA2", token);
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+    expect(body.message).to.equal("OK");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}

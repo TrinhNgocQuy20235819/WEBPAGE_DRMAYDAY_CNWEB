@@ -1,0 +1,31 @@
+meta {
+  name: 04 Get Lesion Locations
+  type: http
+  seq: 4
+  tags: [automated, lesion-ai]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lesion-locations?episodeId={{createdEpisodeId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Returns location in episode", function () {
+    expect(body.data).to.be.an("array");
+    expect(body.data.length).to.be.at.least(1);
+    const loc = body.data.find(l => l.location_id === bru.getVar("createdLocationId"));
+    expect(loc).to.exist;
+    expect(loc.body_part).to.equal("Cang tay trai mat truoc");
+  });
+}
+

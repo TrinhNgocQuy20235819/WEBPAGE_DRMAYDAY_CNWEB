@@ -1,0 +1,30 @@
+meta {
+  name: 02 Get My Episodes
+  type: http
+  seq: 2
+  tags: [automated, lesion-ai]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lesion-episodes
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Returns list of episodes including created one", function () {
+    expect(body.data).to.be.an("array");
+    expect(body.data.length).to.be.at.least(1);
+    const ep = body.data.find(e => e.episode_id === bru.getVar("createdEpisodeId"));
+    expect(ep).to.exist;
+  });
+}
+

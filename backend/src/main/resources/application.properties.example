@@ -8,10 +8,34 @@ spring.datasource.password=your_db_password
 spring.datasource.driver-class-name=org.postgresql.Driver
 
 # JPA / Hibernate
-spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.ddl-auto=none
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
-# JWT Configuration (Example)
-jwt.secret=your_super_secret_jwt_key_should_be_at_least_256_bits
+# JWT Configuration (Required via environment variable, minimum 256-bit / 32-byte key)
+jwt.secret=${JWT_SECRET:}
 jwt.expiration=86400000
+spring.sql.init.mode=never
+spring.data.redis.host=${REDIS_HOST:localhost}
+spring.data.redis.port=${REDIS_PORT:6379}
+spring.data.redis.password=${REDIS_PASSWORD:}
+spring.data.redis.ssl.enabled=${REDIS_SSL:false}
+spring.data.redis.timeout=2s
+spring.data.redis.connect-timeout=2s
+security.login.identity-source=${LOGIN_IDENTITY_SOURCE:phone}
+security.rbac.source=${RBAC_SOURCE:configuration}
+security.rbac.admin-permission=${RBAC_ADMIN_PERMISSION:}
+security.rbac.manage-permission=${RBAC_MANAGE_PERMISSION:}
+security.rbac.patient-permission=${RBAC_PATIENT_PERMISSION:}
+security.rbac.doctor-permission=${RBAC_DOCTOR_PERMISSION:}
+
+# Gemini Vision: real local image bytes, structured JSON, no automatic fallback.
+ai.service.provider=${AI_SERVICE_PROVIDER:gemini}
+ai.service.base-url=${AI_SERVICE_URL:https://generativelanguage.googleapis.com}
+ai.service.model=${GEMINI_MODEL:gemini-2.5-flash}
+ai.service.api-key=${GEMINI_API_KEY:}
+ai.service.mode=live
+ai.service.allow-mock=false
+ai.service.media-root=${AI_MEDIA_ROOT:}
+ai.service.connect-timeout-ms=3000
+ai.service.read-timeout-ms=${AI_READ_TIMEOUT_MS:60000}

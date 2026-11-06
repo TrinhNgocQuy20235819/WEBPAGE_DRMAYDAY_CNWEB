@@ -1,0 +1,42 @@
+meta {
+  name: 01 Direct AI Inference Mock
+  type: http
+  seq: 1
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/ai/inference
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "attachment_id": {{createdAttachmentId}}
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Returns valid prediction payload without undefined local_auas", function () {
+    expect(body.data.hives_count).to.be.a("number");
+    expect(Number.isInteger(body.data.hives_count)).to.be.true;
+    expect(body.data.hives_count).to.be.at.least(0);
+    expect(body.data).to.not.have.property("local_auas");
+    expect(body.data.is_mock).to.be.false;
+  });
+}
+

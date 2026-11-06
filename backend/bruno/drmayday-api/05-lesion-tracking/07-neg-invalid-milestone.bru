@@ -1,0 +1,36 @@
+meta {
+  name: 07 Invalid Milestone Rejected (2001)
+  type: http
+  seq: 7
+  tags: [automated, lesion-ai]
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/milestone
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "milestone": "invalid_unknown_milestone"
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 400 and ErrorCode 7006 (INVALID_MILESTONE)", function () {
+    expect(res.getStatus()).to.equal(400);
+    expect(body.code).to.equal(7006);
+    expect(body.message).to.equal("Invalid milestone value");
+  });
+}
+

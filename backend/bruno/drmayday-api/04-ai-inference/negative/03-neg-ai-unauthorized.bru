@@ -1,0 +1,31 @@
+meta {
+  name: 03 AI Inference Unauthorized (3008)
+  type: http
+  seq: 3
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/ai/inference
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "attachment_id": {{createdAttachmentId}}
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 401 Unauthorized", function () {
+    expect(res.getStatus()).to.equal(401);
+    expect(body.code).to.equal(3008);
+  });
+}
+

@@ -1,0 +1,35 @@
+meta {
+  name: 08 Score Out of Range Rejected (2001)
+  type: http
+  seq: 8
+  tags: [automated, lesion-ai]
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/milestone
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "itch_score": 15
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 400 and ErrorCode 7007 (SYMPTOM_SCORE_OUT_OF_RANGE)", function () {
+    expect(res.getStatus()).to.equal(400);
+    expect(body.code).to.equal(7007);
+    expect(body.message).to.contain("Symptom score");
+  });
+}

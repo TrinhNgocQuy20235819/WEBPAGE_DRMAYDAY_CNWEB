@@ -1,0 +1,35 @@
+meta {
+  name: 03 Verify Persisted AI Inference
+  type: http
+  seq: 3
+  tags: [automated, lesion-ai]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Database persists hives_count accurately without local_auas", function () {
+    expect(body.data.hives_count).to.be.a("number");
+    expect(body.data.hives_count).to.be.at.least(0);
+    expect(body.data).to.not.have.property("local_auas");
+    const expHives = bru.getVar("expectedHivesCount");
+    if (expHives !== undefined && expHives !== null) {
+      expect(body.data.hives_count).to.equal(expHives);
+    }
+    if (body.data.annotated_url != null) {
+      expect(body.data.annotated_url).to.be.a("string").and.not.empty;
+    }
+  });
+}

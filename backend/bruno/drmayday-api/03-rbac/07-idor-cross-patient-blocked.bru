@@ -1,0 +1,25 @@
+meta {
+  name: 07 Cross-Patient IDOR Blocked (3106)
+  type: http
+  seq: 7
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/inference
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientBToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 403 Forbidden cross-patient access", function () {
+    expect(res.getStatus()).to.equal(403);
+    expect(body.code).to.equal(3106);
+    expect(body.message).to.contain("Unauthorized access to patient data");
+  });
+}
+

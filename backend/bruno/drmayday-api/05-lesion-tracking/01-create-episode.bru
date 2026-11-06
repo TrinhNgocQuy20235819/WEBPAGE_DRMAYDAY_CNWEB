@@ -1,0 +1,50 @@
+meta {
+  name: 01 Create Lesion Episode
+  type: http
+  seq: 1
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-episodes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "medical_record_id": {{medicalRecordId}},
+    "name": "Dot bung phat vung canh tay trai",
+    "occurred_at": "2026-11-01T20:00:00Z",
+    "context_tags": "Khac",
+    "context_other": "Co tiep xuc voi bui go",
+    "medication_name": "Cetirizine 10mg",
+    "medication_taken_ago": "2",
+    "medication_unit": "gio",
+    "description": "Xuat hien dam san phu do ngua du doi sau khi di mua"
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 201 and ApiResponse 1001", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(body.code).to.equal(1001);
+  });
+  test("Episode created with valid ID", function () {
+    expect(body.data).to.have.property("episode_id");
+    expect(body.data.name).to.equal("Dot bung phat vung canh tay trai");
+    expect(body.data.patient_id).to.be.a("string").and.not.empty;
+  });
+  if (res.getStatus() === 201 && body.data && body.data.episode_id) {
+    bru.setVar("createdEpisodeId", body.data.episode_id);
+  }
+}

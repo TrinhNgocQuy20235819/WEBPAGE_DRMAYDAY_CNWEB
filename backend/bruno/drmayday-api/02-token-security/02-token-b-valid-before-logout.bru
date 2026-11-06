@@ -1,0 +1,62 @@
+meta {
+  name: 02 Token B Valid Before Logout
+  type: http
+  seq: 2
+  tags: [automated]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"phone": "{{patientPhone}}", "password": "{{patientPassword}}"}
+}
+
+script:pre-request {
+  req.setBody({"phone": (bru.getVar("patientPhone") || bru.getEnvVar("patientPhone")), "password": (bru.getVar("patientPassword") || bru.getEnvVar("patientPassword"))});
+  if (!(bru.getVar("patientPhone") || bru.getEnvVar("patientPhone")) || !(bru.getVar("patientPassword") || bru.getEnvVar("patientPassword"))) throw new Error("Enter patient credentials as local/secret variables");
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+    expect(body.message).to.equal("OK");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+  test("JWT and safe user", function () {
+    expect(body.data.accessToken).to.be.a("string").and.not.empty;
+    expect(body.data.tokenType).to.equal("Bearer");
+    expect(body.data.user.accountId).to.be.a("number");
+  });
+  if (res.getStatus() === 200) { bru.setVar("patientTokenA2", body.data.accessToken); }
+  function claims(token) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const input = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    let bits = 0, value = 0, raw = "";
+    for (const c of input) {
+      if (c === "=") break;
+      value = (value << 6) | alphabet.indexOf(c); bits += 6;
+      if (bits >= 8) { bits -= 8; raw += String.fromCharCode((value >> bits) & 255); }
+    }
+    return JSON.parse(raw);
+  }
+  test("BL-01 two independent jti", function () {
+    const a = (bru.getVar("patientTokenA") || bru.getEnvVar("patientTokenA"));
+    expect(a).to.be.a("string").and.not.empty;
+    expect(claims(a).jti).not.to.equal(claims(body.data.accessToken).jti);
+  });
+}

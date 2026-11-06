@@ -1,0 +1,47 @@
+meta {
+  name: 03 Create Lesion Location
+  type: http
+  seq: 3
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-locations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "episode_id": {{createdEpisodeId}},
+    "body_part": "Cang tay trai mat truoc",
+    "occurred_at": "2026-11-01T20:10:00Z",
+    "context_tags": "Tiep xuc ao len",
+    "medication_name": "Hydroxyzine",
+    "medication_taken_ago": "1",
+    "medication_unit": "ngay"
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 201 and ApiResponse 1001", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(body.code).to.equal(1001);
+  });
+  test("Location created with valid ID", function () {
+    expect(body.data).to.have.property("location_id");
+    expect(body.data.body_part).to.equal("Cang tay trai mat truoc");
+  });
+  if (res.getStatus() === 201 && body.data && body.data.location_id) {
+    bru.setVar("createdLocationId", body.data.location_id);
+  }
+}

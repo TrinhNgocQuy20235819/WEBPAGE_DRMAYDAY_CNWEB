@@ -1,0 +1,43 @@
+meta {
+  name: 05 Invalid JWT Signature
+  type: http
+  seq: 5
+  tags: [automated]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/shared/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tamperedToken}}
+}
+
+script:pre-request {
+  const original = (bru.getVar("patientTokenA") || bru.getEnvVar("patientTokenA"));
+  if (!original) throw new Error("Run JWT-01 first");
+  const parts = original.split(".");
+  parts[2] = (parts[2][0] === "A" ? "B" : "A") + parts[2].slice(1);
+  bru.setVar("tamperedToken", parts.join("."));
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 401 and ApiResponse 3008", function () {
+    expect(res.getStatus()).to.equal(401);
+    expect(body.code).to.equal(3008);
+    expect(body.message).to.equal("Phien dang nhap khong hop le hoac da het han");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}
+
+docs {
+  Token signature is changed locally; never sent to an external service.
+}

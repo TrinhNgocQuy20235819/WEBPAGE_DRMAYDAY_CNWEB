@@ -1,0 +1,38 @@
+meta {
+  name: 07 Patient B Login
+  type: http
+  seq: 7
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "phone": "{{patientBPhone}}",
+    "password": "{{patientBPassword}}"
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Returns valid JWT for Patient B", function () {
+    expect(body.data.accessToken).to.be.a("string").and.not.empty;
+  });
+  if (res.getStatus() === 200 && body.data && body.data.accessToken) {
+    bru.setVar("patientBToken", body.data.accessToken);
+    bru.setVar("patientTokenB", body.data.accessToken);
+  }
+}
