@@ -1,10 +1,17 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function AuthLayout() {
+  const location = useLocation();
+  const isRegister = location.pathname.includes("register");
+
   return (
-    <div className="h-screen flex bg-white font-sans antialiased overflow-hidden">
+    <div className="min-h-screen flex bg-white font-sans antialiased">
       {/* Left Column: High-contrast Dark Clinical Branding */}
-      <div className="hidden lg:flex lg:w-1/2 h-full bg-[var(--base-gray-900)] flex-col justify-between p-12 text-white relative overflow-hidden border-r border-[var(--base-gray-800)] shrink-0">
+      <div
+        className={`hidden lg:flex ${
+          isRegister ? "lg:w-5/12" : "lg:w-1/2"
+        } min-h-screen bg-[var(--base-gray-900)] flex-col justify-between p-12 text-white relative overflow-hidden border-r border-[var(--base-gray-800)] shrink-0 sticky top-0 h-screen`}
+      >
         {/* Clinical Photography Background with Dark Gradient Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <img
@@ -12,7 +19,7 @@ export default function AuthLayout() {
             alt="Bác sĩ khám lâm sàng DrMayDay"
             className="w-full h-full object-cover object-center opacity-30 filter brightness-90 contrast-105"
             onError={(e) => {
-              e.target.style.display = 'none';
+              e.target.style.display = "none";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--base-gray-950)] via-[rgba(9,30,66,0.85)] to-[rgba(9,31,91,0.92)]"></div>
@@ -26,8 +33,8 @@ export default function AuthLayout() {
               alt="DrMayDay - BV Da liễu Trung ương"
               className="h-12 w-auto object-contain"
               onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
+                e.target.style.display = "none";
+                e.target.nextSibling.style.display = "block";
               }}
             />
             <div className="hidden font-bold text-2xl text-white">DrMayDay</div>
@@ -70,9 +77,9 @@ export default function AuthLayout() {
         </div>
       </div>
 
-      {/* Right Column: Auth Form */}
-      <div className="flex-1 h-full flex items-center justify-center p-6 sm:p-12 overflow-y-auto bg-white">
-        <div className="w-full max-w-md py-6">
+      {/* Right Column: Auth Form with graceful scrolling */}
+      <div className="flex-1 min-h-screen flex flex-col items-center justify-start p-6 sm:p-12 overflow-y-auto bg-white">
+        <div className={`w-full my-auto ${isRegister ? "max-w-2xl py-8" : "max-w-md py-6"}`}>
           <Outlet />
         </div>
       </div>
