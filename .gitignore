@@ -159,6 +159,7 @@ backend/*.log
 # 11. Frontend Build & Dependencies (React / Vite / Node)
 # =======================================================
 frontend/node_modules/
+backend-bac-si/node_modules/
 frontend/dist/
 frontend/dist-ssr/
 frontend/*.local
