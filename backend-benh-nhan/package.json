@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node tests/run_all_tests.js"
+    "test": "node tests/run_all_tests.js",
+    "test:admin": "node tests/test_slide_3_4_11.js",
+    "test:all": "node tests/run_all_tests.js && node tests/test_slide_3_4_11.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",

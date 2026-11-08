@@ -18,7 +18,7 @@ const { JWT_SECRET } = require('../src/middlewares/authMiddleware');
 
 const results = [];
 
-function makeHttpRequest({ method, path: reqPath, headers = {}, body = null }) {
+async function makeHttpRequest({ method, path: reqPath, headers = {}, body = null }) {
   return new Promise((resolve, reject) => {
     const socket = new Duplex({
       read() {},
@@ -26,9 +26,10 @@ function makeHttpRequest({ method, path: reqPath, headers = {}, body = null }) {
         callback();
       }
     });
+    socket.remoteAddress = '127.0.0.1';
 
     const req = new http.IncomingMessage(socket);
-    req.method = method;
+    req.method = method.toUpperCase();
     req.url = reqPath;
     req.headers = {
       host: 'localhost:8080',
@@ -36,44 +37,41 @@ function makeHttpRequest({ method, path: reqPath, headers = {}, body = null }) {
       ...headers
     };
 
+    const bodyStr = body !== null && req.method !== 'GET' ? JSON.stringify(body) : '';
+    if (bodyStr) {
+      req.headers['content-length'] = String(Buffer.byteLength(bodyStr));
+    }
+
     const res = new http.ServerResponse(req);
-    res.assignSocket(socket);
+    let statusCode = 200;
 
-    const chunks = [];
-    res.write = function (chunk) {
-      if (chunk) chunks.push(Buffer.from(chunk));
-      return true;
+    res.status = function (code) {
+      statusCode = code;
+      this.statusCode = code;
+      return this;
     };
 
-    res.end = function (chunk) {
-      if (chunk) chunks.push(Buffer.from(chunk));
-      const bodyStr = Buffer.concat(chunks).toString('utf-8');
-      let json = null;
-      try {
-        json = JSON.parse(bodyStr);
-      } catch (e) {
-        json = bodyStr;
-      }
-      resolve({
-        status: res.statusCode,
-        headers: res.getHeaders(),
-        body: json
-      });
+    res.json = function (obj) {
+      resolve({ status: this.statusCode || statusCode, body: obj });
+      return this;
     };
 
-    app(req, res);
+    app.handle(req, res, (err) => {
+      if (err) reject(err);
+    });
 
-    if (body) {
-      req.push(typeof body === 'string' ? body : JSON.stringify(body));
+    if (bodyStr) {
+      req.push(bodyStr);
     }
     req.push(null);
   });
 }
 
-function recordTest(testId, name, passed, details = '') {
-  results.push({ testId, name, passed, details });
+function recordTest(testId, name, passed, details = '', res = null) {
+  const detailStr = details || (res && !passed ? JSON.stringify(res.body) : '');
+  results.push({ testId, name, passed, details: detailStr });
   const status = passed ? '✅ PASS' : '❌ FAIL';
-  console.log(`[${status}] ${testId} - ${name} ${details ? '(' + details + ')' : ''}`);
+  console.log(`[${status}] ${testId} - ${name} ${detailStr ? '(' + detailStr + ')' : ''}`);
 }
 
 async function runTestSuite() {
@@ -482,9 +480,22 @@ async function runTestSuite() {
   recordTest('TC33', 'room05: Xóa phòng khám thành công -> 1000 OK', res.body.code === '1000');
 
   // TC34: branch05 - Xóa chi nhánh trống
+  // Tạo chi nhánh tạm thời không có khoa hay nhân viên để kiểm tra xóa thành công
+  const tempBranchRes = await makeHttpRequest({
+    method: 'POST',
+    path: '/api/v1/branches',
+    headers: adminHeader,
+    body: {
+      name: `Cơ sở Độc Lập ${Date.now()}`,
+      address: '100 Độc Lập, Hà Nội',
+      phone: '02431112222'
+    }
+  });
+  const tempBranchId = tempBranchRes.body.data?.id;
+
   res = await makeHttpRequest({
     method: 'DELETE',
-    path: `/api/v1/branches/${createdBranchId}`,
+    path: `/api/v1/branches/${tempBranchId}`,
     headers: adminHeader
   });
   recordTest('TC34', 'branch05: Xóa chi nhánh không còn dữ liệu con -> 1000 OK', res.body.code === '1000');

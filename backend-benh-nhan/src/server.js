@@ -38,11 +38,11 @@ app.get(['/api/v1/health', '/api/health'], (_req, res) => {
   });
 });
 
-// Gắn toàn bộ tuyến đường API của Phân hệ Bệnh nhân và Phân hệ Admin vào cả /api/v1 và /api
-app.use('/api/v1', patientRoutes);
-app.use('/api', patientRoutes);
+// Gắn toàn bộ tuyến đường API của Phân hệ Admin và Phân hệ Bệnh nhân vào cả /api/v1 và /api
 app.use('/api/v1', adminRoutes);
 app.use('/api', adminRoutes);
+app.use('/api/v1', patientRoutes);
+app.use('/api', patientRoutes);
 
 // ============================================================================
 // XỬ LÝ ROUTE KHÔNG TỒN TẠI (404) & MIDDLEWARE BẮT LỖI TOÀN CỤC
