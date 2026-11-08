@@ -1,35 +1,56 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import apiClient from "../../services/apiClient";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("0912 345 678");
   const [password, setPassword] = useState("password123");
   const [role, setRole] = useState("patient");
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!phone || !password) {
+    const cleanPhone = phone.replace(/\s+/g, "").trim();
+    if (!cleanPhone || !password) {
       toast.error("Vui lòng nhập đầy đủ Số điện thoại và Mật khẩu!");
       return;
     }
 
-    localStorage.setItem("token", "mock-jwt-token-production-standard");
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        phone,
-        role,
-        full_name: role === "admin" ? "Quản Trị Viên" : role === "doctor" ? "TS.BS. Nguyễn Văn Hùng" : "Nguyễn Thị Mai",
-      })
-    );
-    toast.success(`Đăng nhập thành công với vai trò ${role.toUpperCase()}`);
+    setSubmitting(true);
+    try {
+      const res = await apiClient.post("/auth/login", {
+        phone: cleanPhone,
+        password,
+      });
+      const { token, user } = res.data || {};
+      const mappedRole =
+        user?.role_name === "admin"
+          ? "admin"
+          : user?.role_name === "bac_si" || user?.role_name === "dieu_duong"
+          ? "doctor"
+          : "patient";
 
-    if (role === "admin") navigate("/admin");
-    else if (role === "doctor") navigate("/doctor");
-    else navigate("/patient");
+      localStorage.setItem("token", token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          role: mappedRole,
+        })
+      );
+      toast.success(`Xin chào ${user?.full_name || cleanPhone}!`);
+
+      if (mappedRole === "admin") navigate("/admin");
+      else if (mappedRole === "doctor") navigate("/doctor");
+      else navigate("/patient");
+    } catch {
+      // Error toast already handled by apiClient interceptor
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -151,9 +172,10 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="base-btn base-btn-primary w-full py-3 text-sm font-bold shadow-sm justify-center cursor-pointer mt-2"
+          disabled={submitting}
+          className="base-btn base-btn-primary w-full py-3 text-sm font-bold shadow-sm justify-center cursor-pointer mt-2 disabled:opacity-60"
         >
-          <span>Đăng nhập</span>
+          <span>{submitting ? "Đang xác thực..." : "Đăng nhập"}</span>
         </button>
       </form>
 

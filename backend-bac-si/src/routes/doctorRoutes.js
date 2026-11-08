@@ -4,17 +4,19 @@ const { authenticateJWT, requireRoles } = require('../middlewares/authMiddleware
 const doctorController = require('../controllers/doctorController');
 
 const router = express.Router();
-const doctorOnly = [authenticateJWT, requireRoles('bac_si')];
+const clinicalStaffOnly = [authenticateJWT, requireRoles('bac_si', 'dieu_duong', 'admin')];
 
-router.get('/doctor/patients/search', ...doctorOnly, doctorController.searchPatients);
-router.get('/doctor/queue', ...doctorOnly, doctorController.getQueue);
-router.get('/doctor/patients/:patientId/history', ...doctorOnly, doctorController.getPatientHistory);
-router.post('/doctor/medical-records/:id/accept', ...doctorOnly, doctorController.acceptRecord);
-router.post('/doctor/medical-records/:id/complete', ...doctorOnly, doctorController.completeRecord);
-router.post('/doctor/medical-records/:id/prescriptions', ...doctorOnly, doctorController.createPrescription);
-router.post('/doctor/medical-records/:id/lab-results', ...doctorOnly, doctorController.createLabResult);
-router.get('/doctor/medical-records/:id/lab-results', ...doctorOnly, doctorController.getLabResults);
-router.patch('/doctor/lab-results/:labId', ...doctorOnly, doctorController.updateLabResult);
-router.get('/doctor/medical-records/:id/lesion-images', ...doctorOnly, doctorController.getLesionImages);
+router.get('/doctor/patients/search', ...clinicalStaffOnly, doctorController.searchPatients);
+router.post('/doctor/patients', ...clinicalStaffOnly, doctorController.createWalkInPatientRecord);
+router.get('/doctor/queue', ...clinicalStaffOnly, doctorController.getQueue);
+router.get('/doctor/patients/:patientId/history', ...clinicalStaffOnly, doctorController.getPatientHistory);
+router.post('/doctor/medical-records/:id/accept', ...clinicalStaffOnly, doctorController.acceptRecord);
+router.post('/doctor/medical-records/:id/complete', ...clinicalStaffOnly, doctorController.completeRecord);
+router.post('/doctor/medical-records/:id/prescriptions', ...clinicalStaffOnly, doctorController.createPrescription);
+router.post('/doctor/medical-records/:id/lab-results', ...clinicalStaffOnly, doctorController.createLabResult);
+router.get('/doctor/medical-records/:id/lab-results', ...clinicalStaffOnly, doctorController.getLabResults);
+router.patch('/doctor/lab-results/:labId', ...clinicalStaffOnly, doctorController.updateLabResult);
+router.put('/doctor/lab-results/:labId', ...clinicalStaffOnly, doctorController.updateLabResult);
+router.get('/doctor/medical-records/:id/lesion-images', ...clinicalStaffOnly, doctorController.getLesionImages);
 
 module.exports = router;

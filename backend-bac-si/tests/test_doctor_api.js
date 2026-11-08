@@ -1,65 +1,91 @@
 /**
- * Automated Test Suite for DrMayDay Doctor Backend
+ * Automated Test Suite for DrMayDay Doctor Backend (In-Process Express Pipeline)
  */
+process.env.USE_EMBEDDED_PG = 'true';
 const http = require('http');
 const assert = require('assert');
+const { Duplex } = require('stream');
 const { app } = require('../src/server');
+const { initDatabase } = require('../src/config/database');
+
+async function request(endpoint, options = {}) {
+  return new Promise((resolve, reject) => {
+    const socket = new Duplex({
+      read() {},
+      write(_chunk, _enc, cb) {
+        cb();
+      }
+    });
+    socket.remoteAddress = '127.0.0.1';
+
+    const req = new http.IncomingMessage(socket);
+    req.method = (options.method || 'GET').toUpperCase();
+    req.url = endpoint;
+    req.headers = {
+      host: 'localhost:8080',
+      'content-type': 'application/json',
+      ...(options.headers || {})
+    };
+    // Normalize header keys to lowercase for Node IncomingMessage
+    for (const k of Object.keys(req.headers)) {
+      if (k !== k.toLowerCase()) {
+        req.headers[k.toLowerCase()] = req.headers[k];
+        delete req.headers[k];
+      }
+    }
+
+    const bodyStr =
+      options.body !== undefined && options.body !== null && req.method !== 'GET'
+        ? typeof options.body === 'string'
+          ? options.body
+          : JSON.stringify(options.body)
+        : '';
+    if (bodyStr) {
+      req.headers['content-length'] = String(Buffer.byteLength(bodyStr));
+    }
+
+    const res = new http.ServerResponse(req);
+    let statusCode = 200;
+
+    res.status = function (code) {
+      statusCode = code;
+      this.statusCode = code;
+      return this;
+    };
+
+    res.json = function (obj) {
+      resolve({ status: this.statusCode || statusCode, headers: this.getHeaders(), body: obj });
+      return this;
+    };
+
+    app.handle(req, res, (err) => {
+      if (err) reject(err);
+    });
+
+    if (bodyStr) req.push(bodyStr);
+    req.push(null);
+  });
+}
 
 async function runTests() {
   console.log('================================================================');
   console.log('  BẮT ĐẦU CHẠY BỘ KIỂM THỬ BACKEND BÁC SĨ (DRMAYDAY DOCTOR)     ');
   console.log('================================================================');
 
-  const server = http.createServer(app);
-  await new Promise((resolve) => server.listen(0, resolve));
-  const port = server.address().port;
-  const baseUrl = `http://127.0.0.1:${port}`;
+  await initDatabase();
 
   let passed = 0;
   let total = 0;
-
-  function test(name, fn) {
-    total++;
-    try {
-      fn();
-      console.log(`[✅ PASS] TC${String(total).padStart(2, '0')}: ${name}`);
-      passed++;
-    } catch (err) {
-      console.error(`[❌ FAIL] TC${String(total).padStart(2, '0')}: ${name}`, err.message);
-    }
-  }
 
   async function testAsync(name, fn) {
     total++;
     try {
       await fn();
-      console.log(`[✅ PASS] TC${String(total).padStart(2, '0')}: ${name}`);
+      console.log(`[PASS] TC${String(total).padStart(2, '0')}: ${name}`);
       passed++;
     } catch (err) {
-      console.error(`[❌ FAIL] TC${String(total).padStart(2, '0')}: ${name}`, err.message);
+      console.error(`[FAIL] TC${String(total).padStart(2, '0')}: ${name}`, err.message);
     }
-  }
-
-  async function request(path, options = {}) {
-    return new Promise((resolve, reject) => {
-      const url = new URL(path, baseUrl);
-      const req = http.request(url, options, (res) => {
-        let body = '';
-        res.on('data', (chunk) => (body += chunk));
-        res.on('end', () => {
-          try {
-            resolve({ status: res.statusCode, headers: res.headers, body: JSON.parse(body) });
-          } catch {
-            resolve({ status: res.statusCode, headers: res.headers, body });
-          }
-        });
-      });
-      req.on('error', reject);
-      if (options.body) {
-        req.write(typeof options.body === 'string' ? options.body : JSON.stringify(options.body));
-      }
-      req.end();
-    });
   }
 
   // TC01: Health check endpoint
@@ -104,8 +130,6 @@ async function runTests() {
     const res = await request('/api/v1/doctor/unknown-route');
     assert.strictEqual(String(res.body.code), '2003');
   });
-
-  server.close();
 
   console.log('================================================================');
   console.log(`  KẾT QUẢ KIỂM THỬ: ${passed}/${total} PASS (${((passed / total) * 100).toFixed(1)}%)`);

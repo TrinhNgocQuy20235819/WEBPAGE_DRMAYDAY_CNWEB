@@ -164,8 +164,9 @@ async function deleteTemplate(req, res) {
 async function createSection(req, res) {
   try {
     const templateId = req.params.template_id;
-    const { title, order, filled_by } = req.body;
-    if (!templateId || !title) return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);
+    const { title, name, order, filled_by } = req.body;
+    const effTitle = String(title || name || '').trim();
+    if (!templateId || !effTitle) return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);
 
     const tmpl = state.customTemplates[templateId];
     if (!tmpl) return sendResponse(res, RESPONSE_CODES.TEMPLATE_NOT_FOUND);
@@ -173,7 +174,8 @@ async function createSection(req, res) {
     const secId = `SEC_${Date.now()}`;
     const newSec = {
       section_id: secId,
-      title: title.trim(),
+      title: effTitle,
+      name: effTitle,
       order: order !== undefined ? String(order) : String(tmpl.sections.length + 1),
       filled_by: filled_by || 'both',
       questions: []
@@ -194,12 +196,16 @@ async function editSection(req, res) {
     const id = req.params.id;
     if (!id) return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);
 
-    const { title, order, filled_by } = req.body;
+    const { title, name, order, filled_by } = req.body;
+    const effTitle = (title || name || '').trim();
 
     for (const tmpl of Object.values(state.customTemplates)) {
-      const sec = tmpl.sections.find(s => s.section_id === id);
+      const sec = tmpl.sections.find(s => String(s.section_id) === String(id));
       if (sec) {
-        if (title) sec.title = title.trim();
+        if (effTitle) {
+          sec.title = effTitle;
+          sec.name = effTitle;
+        }
         if (order !== undefined) sec.order = String(order);
         if (filled_by) sec.filled_by = filled_by;
         saveStore();
@@ -220,7 +226,7 @@ async function deleteSection(req, res) {
     if (!id) return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);
 
     for (const tmpl of Object.values(state.customTemplates)) {
-      const idx = tmpl.sections.findIndex(s => s.section_id === id);
+      const idx = tmpl.sections.findIndex(s => String(s.section_id) === String(id));
       if (idx !== -1) {
         tmpl.sections.splice(idx, 1);
         saveStore();
@@ -249,7 +255,7 @@ async function createQuestion(req, res) {
     }
 
     for (const tmpl of Object.values(state.customTemplates)) {
-      const sec = tmpl.sections.find(s => s.section_id === sectionId);
+      const sec = tmpl.sections.find(s => String(s.section_id) === String(sectionId));
       if (sec) {
         const qId = question_id ? String(question_id).trim() : `Q_${Date.now()}`;
         const newQ = {

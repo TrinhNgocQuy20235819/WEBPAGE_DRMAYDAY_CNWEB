@@ -32,6 +32,33 @@ import LesionTracker from "../pages/patient/LesionTracker";
 import PatientProfile from "../pages/patient/PatientProfile";
 import EmergencyTriage from "../pages/patient/EmergencyTriage";
 
+function getStoredRole() {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const u = JSON.parse(raw);
+    if (u.role) return u.role;
+    if (u.role_name === "admin") return "admin";
+    if (u.role_name === "bac_si" || u.role_name === "dieu_duong") return "doctor";
+    return "patient";
+  } catch {
+    return null;
+  }
+}
+
+function ProtectedRoute({ allowedRoles, children }) {
+  const token = localStorage.getItem("token");
+  const role = getStoredRole();
+  if (!token || !role) {
+    return <Navigate to="/login" replace />;
+  }
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    const fallback = role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : "/patient";
+    return <Navigate to={fallback} replace />;
+  }
+  return children;
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -49,7 +76,14 @@ export default function AppRoutes() {
       </Route>
 
       {/* Admin Module Routes (Đầu việc 1) */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="topology" element={<TopologyManagement />} />
@@ -57,7 +91,14 @@ export default function AppRoutes() {
       </Route>
 
       {/* Doctor Module Routes (Đầu việc 3) */}
-      <Route path="/doctor" element={<DoctorLayout />}>
+      <Route
+        path="/doctor"
+        element={
+          <ProtectedRoute allowedRoles={["doctor", "admin"]}>
+            <DoctorLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DoctorQueue />} />
         <Route path="prescriptions" element={<DoctorPrescription />} />
         <Route path="lesions" element={<DoctorLesionReview />} />
@@ -65,7 +106,14 @@ export default function AppRoutes() {
       </Route>
 
       {/* Patient Module Routes (Đầu việc 2) */}
-      <Route path="/patient" element={<PatientLayout />}>
+      <Route
+        path="/patient"
+        element={
+          <ProtectedRoute allowedRoles={["patient"]}>
+            <PatientLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<PatientDashboard />} />
         <Route path="uas7" element={<Uas7Tracker />} />
         <Route path="screening" element={<ScreeningForm />} />

@@ -1,32 +1,60 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import apiClient from "../../services/apiClient";
 
 export default function ForgotPasswordPage() {
   const [phone, setPhone] = useState("");
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState("");
+  const [demoOtp, setDemoOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!phone) {
+    const cleanPhone = phone.replace(/\s+/g, "").trim();
+    if (!cleanPhone) {
       toast.error("Vui lòng nhập số điện thoại!");
       return;
     }
-    toast.success("Mã OTP đã được gửi về số điện thoại của bạn!");
-    setStep(2);
+    setSubmitting(true);
+    try {
+      const res = await apiClient.post("/auth/forgot-password", { phone: cleanPhone });
+      const token = res.data?.reset_token || "";
+      setDemoOtp(token);
+      if (token) setOtp(token);
+      toast.success("Mã OTP khôi phục đã được khởi tạo!");
+      setStep(2);
+    } catch {
+      // Handled by apiClient
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleResetPassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!otp || !newPassword) {
+    const cleanPhone = phone.replace(/\s+/g, "").trim();
+    if (!otp.trim() || !newPassword) {
       toast.error("Vui lòng nhập mã OTP và mật khẩu mới!");
       return;
     }
-    toast.success("Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.");
-    navigate("/login");
+    setSubmitting(true);
+    try {
+      await apiClient.post("/auth/reset-password", {
+        phone: cleanPhone,
+        otp: otp.trim(),
+        new_password: newPassword,
+      });
+      toast.success("Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.");
+      navigate("/login");
+    } catch {
+      // Handled by apiClient
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -78,6 +106,12 @@ export default function ForgotPasswordPage() {
         </form>
       ) : (
         <form onSubmit={handleResetPassword} className="space-y-4">
+          {demoOtp && (
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+              <span>Mã OTP xác thực (môi trường Demo):</span>
+              <strong className="font-mono text-sm tracking-widest">{demoOtp}</strong>
+            </div>
+          )}
           <div>
             <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
               Mã xác thực OTP

@@ -1,25 +1,27 @@
 {
-  "name": "drmayday-workspace",
-  "version": "1.0.0",
+  "name": "drmayday-complete",
+  "version": "2.0.0",
   "private": true,
-  "description": "DrMayDay - Hệ thống Quản lý Bệnh án Điện tử và Hỗ trợ Chẩn đoán, Điều trị Bệnh Mề đay",
+  "description": "DrMayDay Complete Unified System - Quản trị, Bác sĩ, Bệnh nhân, Hạ tầng chung & AI (Embedded PostgreSQL + React Vite)",
   "scripts": {
     "install:all": "npm --prefix backend-benh-nhan install && npm --prefix backend-bac-si install && npm --prefix frontend install",
+    "start": "node server.js",
+    "start:backend": "node server.js",
+    "start:frontend": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
-    "test": "npm run test:patient && npm run test:doctor && npm run build",
+    "test": "npm run test:patient && npm run test:doctor && npm run test:e2e && npm run build",
     "test:patient": "npm --prefix backend-benh-nhan run test:all",
     "test:doctor": "npm --prefix backend-bac-si test",
-    "test:frontend": "npm --prefix frontend run build",
-    "start:patient": "npm --prefix backend-benh-nhan start",
-    "start:doctor": "npm --prefix backend-bac-si start",
-    "start:frontend": "npm --prefix frontend run dev"
+    "test:e2e": "node tests/e2e_unified_system.js",
+    "test:frontend": "npm --prefix frontend run build"
   },
   "keywords": [
     "drmayday",
     "urticaria",
     "medical-records",
     "uas7",
-    "aas7"
+    "aas7",
+    "ai-wheal-counter"
   ],
   "author": "DrMayDay Team",
   "license": "ISC"

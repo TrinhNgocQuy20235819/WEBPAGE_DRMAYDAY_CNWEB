@@ -1,12 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { INITIAL_TEMPLATES } from "../../services/mockData";
+import apiClient from "../../services/apiClient";
+
+function normalizeTemplate(t) {
+  const code = t.code_template || t.template_id || t.id;
+  return {
+    id: code,
+    code,
+    name: t.name || code,
+    description:
+      t.description ||
+      (t.loai_benh_an === "MAN"
+        ? "Mẫu bệnh án Mày đay Mạn tính chuẩn Bộ Y tế (≥ 6 tuần)"
+        : t.loai_benh_an === "CAP"
+        ? "Mẫu bệnh án Mày đay Cấp tính chuẩn Bộ Y tế (< 6 tuần)"
+        : "Biểu mẫu lâm sàng động 4 tầng"),
+    version: t.version || "1.0",
+    is_active: String(t.is_active ?? "1") === "1" || t.is_active === true,
+    sections: (t.sections || []).map((s, idx) => ({
+      id: String(s.section_id ?? s.id ?? `SEC_${idx + 1}`),
+      title: s.title || s.name || `Phân mục ${idx + 1}`,
+      order: Number(s.order || idx + 1),
+      filled_by: s.filled_by || "both",
+      questions: (s.questions || []).map((q) => ({
+        id: String(q.question_id ?? q.id),
+        content: q.question_text || q.content || "",
+        type: q.type_question || q.type || "text",
+        options: (q.options || []).map((o) =>
+          typeof o === "string" ? o : o.option_text || o.option_value || ""
+        ),
+        parent_question_id: q.parent_question_id || "",
+        show_if_answer: q.show_if_answer || "",
+      })),
+    })),
+  };
+}
 
 export default function FormBuilder() {
-  const [templates, setTemplates] = useState(INITIAL_TEMPLATES);
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
-  
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   // Modals state
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
@@ -14,7 +49,7 @@ export default function FormBuilder() {
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [showEditSectionModal, setShowEditSectionModal] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
-  
+
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [showEditQuestionModal, setShowEditQuestionModal] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -42,72 +77,105 @@ export default function FormBuilder() {
     show_if_answer: "",
   });
 
-  // --- TEMPLATE CRUD (tmpl01, tmpl04, tmpl05) ---
-  const handleCreateTemplate = (e) => {
-    e.preventDefault();
-    if (!templateForm.name || !templateForm.code) return;
-
-    if (templates.some((t) => t.code.toUpperCase() === templateForm.code.toUpperCase())) {
-      toast.error("Mã mẫu phiếu (code_template) đã tồn tại!");
-      return;
+  const loadTemplates = useCallback(async (preferCode = null) => {
+    setLoading(true);
+    try {
+      const listRes = await apiClient.get("/templates/all");
+      const rawList = listRes.data || [];
+      const details = await Promise.all(
+        rawList.map((item) =>
+          apiClient
+            .get(`/templates/${item.code_template || item.id}`)
+            .then((r) => normalizeTemplate(r.data || item))
+            .catch(() => normalizeTemplate(item))
+        )
+      );
+      setTemplates(details);
+      if (details.length > 0) {
+        const target =
+          (preferCode && details.find((t) => t.code === preferCode)) ||
+          details[0];
+        setSelectedTemplate(target);
+      } else {
+        setSelectedTemplate(null);
+      }
+    } catch {
+      // Handled by interceptor
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    const newTmpl = {
-      id: `tmpl-${Date.now()}`,
-      name: templateForm.name,
-      code: templateForm.code.toUpperCase(),
-      description: templateForm.description,
-      is_active: templateForm.is_active,
-      sections: [
-        {
-          id: `sec-${Date.now()}-1`,
-          title: "Thông Tin Lâm Sàng Cơ Bản",
-          order: 1,
-          filled_by: "patient",
-          questions: [],
-        },
-      ],
-    };
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
 
-    const updated = [newTmpl, ...templates];
-    setTemplates(updated);
-    setSelectedTemplate(newTmpl);
-    setShowCreateTemplateModal(false);
-    setTemplateForm({ name: "", code: "", description: "", is_active: true });
-    toast.success("Đã tạo mẫu phiếu khám mới thành công (Mã 1001)!");
-  };
-
-  const handleEditTemplate = (e) => {
+  // --- TEMPLATE CRUD (tmpl01, tmpl04, tmpl05) ---
+  const handleCreateTemplate = async (e) => {
     e.preventDefault();
-    const updatedTmpl = {
-      ...selectedTemplate,
-      name: templateForm.name,
-      description: templateForm.description,
-      is_active: templateForm.is_active,
-    };
+    const cleanCode = templateForm.code.trim().toUpperCase();
+    if (!templateForm.name.trim() || !cleanCode) return;
 
-    const updatedList = templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t));
-    setTemplates(updatedList);
-    setSelectedTemplate(updatedTmpl);
-    setShowEditTemplateModal(false);
-    toast.success("Đã cập nhật thông tin mẫu phiếu (Mã 1000)!");
+    try {
+      await apiClient.post("/templates", {
+        code_template: cleanCode,
+        name: templateForm.name.trim(),
+        description: templateForm.description,
+        is_active: templateForm.is_active ? "1" : "0",
+      });
+      await apiClient
+        .post(`/templates/${cleanCode}/sections`, {
+          title: "Thông Tin Lâm Sàng Cơ Bản",
+          name: "Thông Tin Lâm Sàng Cơ Bản",
+          order: 1,
+          filled_by: "both",
+        })
+        .catch(() => {});
+
+      setShowCreateTemplateModal(false);
+      setTemplateForm({ name: "", code: "", description: "", is_active: true });
+      toast.success("Đã tạo mẫu phiếu khám mới thành công (Mã 1001)!");
+      await loadTemplates(cleanCode);
+    } catch {
+      // Handled by interceptor
+    }
   };
 
-  const handleDeleteTemplate = (tmplId) => {
+  const handleEditTemplate = async (e) => {
+    e.preventDefault();
+    if (!selectedTemplate) return;
+    try {
+      await apiClient.put(`/templates/${selectedTemplate.code}`, {
+        name: templateForm.name.trim(),
+        description: templateForm.description,
+        is_active: templateForm.is_active ? "1" : "0",
+      });
+      setShowEditTemplateModal(false);
+      toast.success("Đã cập nhật thông tin mẫu phiếu (Mã 1000)!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
+    }
+  };
+
+  const handleDeleteTemplate = async (tmplId) => {
     if (templates.length <= 1) {
       toast.error("Không thể xóa mẫu phiếu cuối cùng của hệ thống!");
       return;
     }
-    if (window.confirm("Bạn có chắc chắn muốn xóa mẫu phiếu này? Toàn bộ phân mục và câu hỏi con sẽ bị xóa CASCADE.")) {
-      const remaining = templates.filter((t) => t.id !== tmplId);
-      setTemplates(remaining);
-      setSelectedTemplate(remaining[0]);
+    if (!window.confirm("Bạn có chắc chắn muốn xóa mẫu phiếu này?")) return;
+    try {
+      await apiClient.delete(`/templates/${tmplId}`);
       toast.success("Đã xóa mẫu phiếu khám (Mã 1000)!");
+      await loadTemplates();
+    } catch {
+      // Handled by interceptor (e.g. 4105 Template in use)
     }
   };
 
   // --- SECTION CRUD (sec01, sec02, sec03) ---
   const handleOpenAddSection = () => {
+    if (!selectedTemplate) return;
     setSectionForm({
       title: "",
       order: selectedTemplate.sections.length + 1,
@@ -116,24 +184,22 @@ export default function FormBuilder() {
     setShowAddSectionModal(true);
   };
 
-  const handleAddSection = (e) => {
+  const handleAddSection = async (e) => {
     e.preventDefault();
-    if (!sectionForm.title) return;
-
-    const newSec = {
-      id: `sec-${Date.now()}`,
-      title: sectionForm.title,
-      order: Number(sectionForm.order) || selectedTemplate.sections.length + 1,
-      filled_by: sectionForm.filled_by,
-      questions: [],
-    };
-
-    const updatedSections = [...selectedTemplate.sections, newSec];
-    const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-    setSelectedTemplate(updatedTmpl);
-    setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
-    setShowAddSectionModal(false);
-    toast.success("Đã thêm phân mục mới (Mã 1001)!");
+    if (!selectedTemplate || !sectionForm.title.trim()) return;
+    try {
+      await apiClient.post(`/templates/${selectedTemplate.code}/sections`, {
+        title: sectionForm.title.trim(),
+        name: sectionForm.title.trim(),
+        order: Number(sectionForm.order) || selectedTemplate.sections.length + 1,
+        filled_by: sectionForm.filled_by,
+      });
+      setShowAddSectionModal(false);
+      toast.success("Đã thêm phân mục mới (Mã 1001)!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
+    }
   };
 
   const handleOpenEditSection = (sec) => {
@@ -146,37 +212,45 @@ export default function FormBuilder() {
     setShowEditSectionModal(true);
   };
 
-  const handleEditSection = (e) => {
+  const handleEditSection = async (e) => {
     e.preventDefault();
-    const updatedSections = selectedTemplate.sections.map((sec) =>
-      sec.id === selectedSection.id
-        ? { ...sec, title: sectionForm.title, order: Number(sectionForm.order), filled_by: sectionForm.filled_by }
-        : sec
-    );
-    const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-    setSelectedTemplate(updatedTmpl);
-    setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
-    setShowEditSectionModal(false);
-    toast.success("Đã cập nhật phân mục (Mã 1000)!");
+    if (!selectedTemplate || !selectedSection) return;
+    try {
+      await apiClient.put(`/templates/sections/${selectedSection.id}`, {
+        title: sectionForm.title.trim(),
+        name: sectionForm.title.trim(),
+        order: Number(sectionForm.order),
+        filled_by: sectionForm.filled_by,
+      });
+      setShowEditSectionModal(false);
+      toast.success("Đã cập nhật phân mục (Mã 1000)!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
+    }
   };
 
-  const handleDeleteSection = (secId) => {
+  const handleDeleteSection = async (secId) => {
+    if (!selectedTemplate) return;
     if (selectedTemplate.sections.length <= 1) {
       toast.error("Mẫu phiếu phải có ít nhất 1 phân mục!");
       return;
     }
-    if (window.confirm("Xóa phân mục này sẽ xóa sạch các câu hỏi bên trong. Bạn có chắc không?")) {
-      const updatedSections = selectedTemplate.sections.filter((s) => s.id !== secId);
-      const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-      setSelectedTemplate(updatedTmpl);
-      setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
+    if (!window.confirm("Xóa phân mục này sẽ xóa các câu hỏi bên trong. Bạn có chắc không?")) return;
+    try {
+      await apiClient.delete(`/templates/sections/${secId}`);
       toast.success("Đã xóa phân mục khỏi biểu mẫu!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
     }
   };
 
   // --- QUESTION CRUD (ques01, ques02, ques03) ---
   const handleOpenAddQuestion = (secId) => {
-    setTargetSectionId(secId || selectedTemplate.sections[0]?.id);
+    if (!selectedTemplate) return;
+    setTargetSectionId(secId || selectedTemplate.sections[0]?.id || "");
+    setSelectedQuestion(null);
     setQuestionForm({
       content: "",
       type: "radio",
@@ -187,40 +261,36 @@ export default function FormBuilder() {
     setShowAddQuestionModal(true);
   };
 
-  const handleAddQuestion = (e) => {
+  const buildOptionObjects = (type, optionsStr) => {
+    if (type === "text" || type === "number" || type === "file_upload") return [];
+    return optionsStr
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((txt, idx) => ({
+        id: idx + 1,
+        option_text: txt,
+        option_value: txt,
+      }));
+  };
+
+  const handleAddQuestion = async (e) => {
     e.preventDefault();
-    if (!questionForm.content) return;
-
-    const optArray =
-      questionForm.type === "text" || questionForm.type === "file_upload"
-        ? []
-        : questionForm.options.split(",").map((s) => s.trim()).filter(Boolean);
-
-    const updatedSections = selectedTemplate.sections.map((sec) => {
-      if (sec.id === targetSectionId) {
-        return {
-          ...sec,
-          questions: [
-            ...sec.questions,
-            {
-              id: `q-${Date.now()}`,
-              content: questionForm.content,
-              type: questionForm.type,
-              options: optArray,
-              parent_question_id: questionForm.parent_question_id || null,
-              show_if_answer: questionForm.show_if_answer || null,
-            },
-          ],
-        };
-      }
-      return sec;
-    });
-
-    const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-    setSelectedTemplate(updatedTmpl);
-    setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
-    setShowAddQuestionModal(false);
-    toast.success("Đã tạo câu hỏi mới (Mã 1001)!");
+    if (!selectedTemplate || !questionForm.content.trim() || !targetSectionId) return;
+    try {
+      await apiClient.post(`/templates/sections/${targetSectionId}/questions`, {
+        question_text: questionForm.content.trim(),
+        type_question: questionForm.type,
+        options: buildOptionObjects(questionForm.type, questionForm.options),
+        parent_question_id: questionForm.parent_question_id || null,
+        show_if_answer: questionForm.show_if_answer || null,
+      });
+      setShowAddQuestionModal(false);
+      toast.success("Đã tạo câu hỏi mới (Mã 1001)!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
+    }
   };
 
   const handleOpenEditQuestion = (secId, q) => {
@@ -236,56 +306,34 @@ export default function FormBuilder() {
     setShowEditQuestionModal(true);
   };
 
-  const handleEditQuestion = (e) => {
+  const handleEditQuestion = async (e) => {
     e.preventDefault();
-    const optArray =
-      questionForm.type === "text" || questionForm.type === "file_upload"
-        ? []
-        : questionForm.options.split(",").map((s) => s.trim()).filter(Boolean);
-
-    const updatedSections = selectedTemplate.sections.map((sec) => {
-      if (sec.id === targetSectionId) {
-        return {
-          ...sec,
-          questions: sec.questions.map((q) =>
-            q.id === selectedQuestion.id
-              ? {
-                  ...q,
-                  content: questionForm.content,
-                  type: questionForm.type,
-                  options: optArray,
-                  parent_question_id: questionForm.parent_question_id || null,
-                  show_if_answer: questionForm.show_if_answer || null,
-                }
-              : q
-          ),
-        };
-      }
-      return sec;
-    });
-
-    const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-    setSelectedTemplate(updatedTmpl);
-    setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
-    setShowEditQuestionModal(false);
-    toast.success("Đã cập nhật câu hỏi (Mã 1000)!");
+    if (!selectedTemplate || !selectedQuestion) return;
+    try {
+      await apiClient.put(`/templates/questions/${selectedQuestion.id}`, {
+        question_text: questionForm.content.trim(),
+        type_question: questionForm.type,
+        options: buildOptionObjects(questionForm.type, questionForm.options),
+        parent_question_id: questionForm.parent_question_id || null,
+        show_if_answer: questionForm.show_if_answer || null,
+      });
+      setShowEditQuestionModal(false);
+      toast.success("Đã cập nhật câu hỏi (Mã 1000)!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
+    }
   };
 
-  const handleDeleteQuestion = (secId, qId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa câu hỏi này khỏi biểu mẫu?")) {
-      const updatedSections = selectedTemplate.sections.map((sec) => {
-        if (sec.id === secId) {
-          return {
-            ...sec,
-            questions: sec.questions.filter((q) => q.id !== qId),
-          };
-        }
-        return sec;
-      });
-      const updatedTmpl = { ...selectedTemplate, sections: updatedSections };
-      setSelectedTemplate(updatedTmpl);
-      setTemplates(templates.map((t) => (t.id === updatedTmpl.id ? updatedTmpl : t)));
+  const handleDeleteQuestion = async (_secId, qId) => {
+    if (!selectedTemplate) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa câu hỏi này khỏi biểu mẫu?")) return;
+    try {
+      await apiClient.delete(`/templates/questions/${qId}`);
       toast.success("Đã xóa câu hỏi khỏi biểu mẫu!");
+      await loadTemplates(selectedTemplate.code);
+    } catch {
+      // Handled by interceptor
     }
   };
 
@@ -309,7 +357,8 @@ export default function FormBuilder() {
           <div className="base-hero-actions">
             <button
               onClick={() => setShowJsonModal(true)}
-              className="base-btn-hero-primary cursor-pointer text-xs"
+              disabled={!selectedTemplate}
+              className="base-btn-hero-primary cursor-pointer text-xs disabled:opacity-50"
             >
               <span className="isax icon-document-code text-sm"></span>
               <span>Xem JSON</span>
@@ -328,259 +377,266 @@ export default function FormBuilder() {
         </div>
       </div>
 
-      {/* Studio Layout: 4 Columns left (Templates), 8 Columns right (Sections & Questions) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Template List (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="base-card p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[var(--base-border-opaque)]">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold text-gray-900 uppercase">Mẫu phiếu</h2>
-                <span className="base-tag base-tag-neutral font-mono text-[10px]">{templates.length}</span>
-              </div>
-              <button
-                onClick={() => {
-                  setTemplateForm({ name: "", code: "", description: "", is_active: true });
-                  setShowCreateTemplateModal(true);
-                }}
-                className="base-btn base-btn-secondary base-btn-mini text-xs"
-                title="Tạo mẫu phiếu mới (tmpl01)"
-              >
-                <span className="isax icon-add text-xs"></span>
-                <span>Thêm mẫu</span>
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {templates.map((tmpl) => (
-                <div
-                  key={tmpl.id}
-                  onClick={() => setSelectedTemplate(tmpl)}
-                  className={`p-3.5 border text-xs cursor-pointer transition-all ${
-                    selectedTemplate.id === tmpl.id
-                      ? "border-[var(--base-brand-blue)] bg-[rgba(59,99,168,0.06)] shadow-xs"
-                      : "border-[var(--base-border-opaque)] hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between font-bold text-gray-900">
-                    <span className="truncate pr-2">{tmpl.name}</span>
-                    <span
-                      className={`base-tag text-[9px] shrink-0 ${
-                        tmpl.is_active ? "base-tag-positive" : "base-tag-neutral"
-                      }`}
-                    >
-                      {tmpl.is_active ? "Kích hoạt" : "Tạm dừng"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mt-1 text-[11px] text-gray-500">
-                    <span className="font-mono font-bold text-[var(--base-brand-blue)]">{tmpl.code}</span>
-                    <span>{tmpl.sections.length} phân mục</span>
-                  </div>
-                  <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">{tmpl.description}</p>
-
-                  {/* Actions for selected template */}
-                  {selectedTemplate.id === tmpl.id && (
-                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[var(--base-border-opaque)]">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTemplateForm({
-                            name: tmpl.name,
-                            code: tmpl.code,
-                            description: tmpl.description,
-                            is_active: tmpl.is_active,
-                          });
-                          setShowEditTemplateModal(true);
-                        }}
-                        className="base-btn base-btn-secondary base-btn-mini flex-1 text-[11px]"
-                      >
-                        <span className="isax icon-edit-2 text-xs"></span>
-                        <span>Sửa</span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTemplate(tmpl.id);
-                        }}
-                        className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50 text-[11px]"
-                      >
-                        <span className="isax icon-trash text-xs"></span>
-                        <span>Xóa</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+      {loading ? (
+        <div className="base-card p-10 text-center text-xs text-gray-400">
+          Đang tải cây biểu mẫu động từ máy chủ...
         </div>
-
-        {/* Right: Sections & Questions Studio (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="base-card p-6 space-y-6">
-            <div className="pb-3 border-b border-[var(--base-border-opaque)] flex items-center justify-between flex-wrap gap-3">
-              <div>
+      ) : !selectedTemplate ? (
+        <div className="base-card p-10 text-center text-xs text-gray-400">
+          Chưa có mẫu phiếu nào. Hãy bấm &quot;Tạo Mẫu Phiếu Mới&quot; để khởi tạo.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: Template List (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="base-card p-4 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--base-border-opaque)]">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-[var(--base-brand-blue)] bg-blue-50 px-2 py-0.5">
-                    {selectedTemplate.code}
-                  </span>
-                  <h3 className="text-base font-bold text-gray-900">{selectedTemplate.name}</h3>
+                  <h2 className="text-xs font-bold text-gray-900 uppercase">Mẫu phiếu</h2>
+                  <span className="base-tag base-tag-neutral font-mono text-[10px]">{templates.length}</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">{selectedTemplate.description}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
                 <button
-                  onClick={handleOpenAddSection}
-                  className="base-btn base-btn-secondary base-btn-compact text-xs"
+                  onClick={() => {
+                    setTemplateForm({ name: "", code: "", description: "", is_active: true });
+                    setShowCreateTemplateModal(true);
+                  }}
+                  className="base-btn base-btn-secondary base-btn-mini text-xs cursor-pointer"
+                  title="Tạo mẫu phiếu mới (tmpl01)"
                 >
-                  <span className="isax icon-folder-add text-sm"></span>
-                  <span>Thêm Phân Mục</span>
-                </button>
-                <button
-                  onClick={() => handleOpenAddQuestion(selectedTemplate.sections[0]?.id)}
-                  className="base-btn base-btn-primary base-btn-compact text-xs"
-                >
-                  <span className="isax icon-add text-sm"></span>
-                  <span>Thêm Câu Hỏi</span>
+                  <span className="isax icon-add text-xs"></span>
+                  <span>Thêm mẫu</span>
                 </button>
               </div>
-            </div>
 
-            {/* Sections Loop */}
-            <div className="space-y-6">
-              {selectedTemplate.sections.map((sec, secIdx) => (
-                <div
-                  key={sec.id}
-                  className="p-4 border border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)] space-y-3"
-                >
-                  <div className="flex items-center justify-between font-bold text-xs text-[var(--base-brand-navy)] uppercase tracking-wider pb-2 border-b border-[var(--base-border-opaque)]">
-                    <div className="flex items-center gap-2">
-                      <span className="h-5 w-5 bg-[var(--base-brand-navy)] text-white text-[10px] font-mono flex items-center justify-center font-bold">
-                        {secIdx + 1}
-                      </span>
-                      <span>{sec.title}</span>
-                      <span className="base-tag base-tag-neutral text-[9px] lowercase font-normal">
-                        ({sec.filled_by || "both"})
+              <div className="space-y-2">
+                {templates.map((tmpl) => (
+                  <div
+                    key={tmpl.id}
+                    onClick={() => setSelectedTemplate(tmpl)}
+                    className={`p-3.5 border text-xs cursor-pointer transition-all ${
+                      selectedTemplate.id === tmpl.id
+                        ? "border-[var(--base-brand-blue)] bg-[rgba(59,99,168,0.06)] shadow-xs"
+                        : "border-[var(--base-border-opaque)] hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold text-gray-900">
+                      <span className="truncate pr-2">{tmpl.name}</span>
+                      <span
+                        className={`base-tag text-[9px] shrink-0 ${
+                          tmpl.is_active ? "base-tag-positive" : "base-tag-neutral"
+                        }`}
+                      >
+                        {tmpl.is_active ? "Kích hoạt" : "Tạm dừng"}
                       </span>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleOpenAddQuestion(sec.id)}
-                        className="base-btn base-btn-secondary base-btn-mini text-[11px]"
-                        title="Thêm câu hỏi vào phân mục này"
-                      >
-                        <span className="isax icon-add text-xs"></span>
-                        <span>Thêm câu hỏi</span>
-                      </button>
-                      <button
-                        onClick={() => handleOpenEditSection(sec)}
-                        className="base-btn base-btn-secondary base-btn-mini text-[11px]"
-                        title="Sửa phân mục"
-                      >
-                        <span className="isax icon-edit-2 text-xs"></span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSection(sec.id)}
-                        className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50 text-[11px]"
-                        title="Xóa phân mục"
-                      >
-                        <span className="isax icon-trash text-xs"></span>
-                      </button>
+                    <div className="flex items-center justify-between mt-1 text-[11px] text-gray-500">
+                      <span className="font-mono font-bold text-[var(--base-brand-blue)]">{tmpl.code}</span>
+                      <span>{tmpl.sections.length} phân mục</span>
                     </div>
-                  </div>
+                    <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">{tmpl.description}</p>
 
-                  <div className="space-y-3">
-                    {sec.questions.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-gray-400 bg-white border border-[var(--base-border-opaque)]">
-                        Phân mục này chưa có câu hỏi nào. Nhấn "Thêm câu hỏi" để tạo câu hỏi đầu tiên.
-                      </div>
-                    ) : (
-                      sec.questions.map((q, qIdx) => (
-                        <div
-                          key={q.id}
-                          className="p-4 bg-white border border-[var(--base-border-opaque)] text-xs space-y-3"
+                    {selectedTemplate.id === tmpl.id && (
+                      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[var(--base-border-opaque)]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTemplateForm({
+                              name: tmpl.name,
+                              code: tmpl.code,
+                              description: tmpl.description,
+                              is_active: tmpl.is_active,
+                            });
+                            setShowEditTemplateModal(true);
+                          }}
+                          className="base-btn base-btn-secondary base-btn-mini flex-1 text-[11px] cursor-pointer"
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="font-semibold text-gray-900 text-sm">
-                              <span className="text-[var(--base-brand-blue)] mr-1.5 font-mono">
-                                {secIdx + 1}.{qIdx + 1}
-                              </span>
-                              {q.content}
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="base-tag base-tag-neutral text-[9px] uppercase font-bold font-mono">
-                                {q.type}
-                              </span>
-                              <button
-                                onClick={() => handleOpenEditQuestion(sec.id, q)}
-                                className="base-btn base-btn-secondary base-btn-mini text-gray-600 hover:text-gray-900"
-                                title="Sửa câu hỏi (ques02)"
-                              >
-                                <span className="isax icon-edit-2 text-xs"></span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteQuestion(sec.id, q.id)}
-                                className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50"
-                                title="Xóa câu hỏi (ques03)"
-                              >
-                                <span className="isax icon-trash text-xs"></span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Conditional Logic Tag if exists */}
-                          {q.parent_question_id && (
-                            <div className="flex items-center gap-1.5 text-[10px] text-amber-700 bg-amber-50 px-2.5 py-1">
-                              <span className="isax icon-routing text-xs font-bold"></span>
-                              <span>
-                                Logic rẽ nhánh: Chỉ hiện khi câu hỏi cha kích hoạt giá trị "<strong>{q.show_if_answer}</strong>"
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Interactive preview of options */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--base-border-opaque)]">
-                            {q.options && q.options.length > 0 ? (
-                              q.options.map((opt, oIdx) => (
-                                <label
-                                  key={oIdx}
-                                  className="flex items-center gap-2.5 p-2.5 border border-[var(--base-border-opaque)] hover:bg-gray-50 transition cursor-pointer select-none"
-                                >
-                                  <input
-                                    type={q.type === "checkbox" ? "checkbox" : "radio"}
-                                    name={`preview-${q.id}`}
-                                    defaultChecked={oIdx === 0}
-                                    className="h-4 w-4 text-[var(--base-brand-blue)] border-gray-300 focus:ring-blue-500 cursor-pointer"
-                                  />
-                                  <span className="text-xs text-gray-800 font-medium">{opt}</span>
-                                </label>
-                              ))
-                            ) : q.type === "file_upload" ? (
-                              <div className="col-span-full p-3 bg-gray-50 text-gray-500 text-center flex items-center justify-center gap-2">
-                                <span className="isax icon-camera text-base"></span>
-                                <span>Khu vực tải ảnh tổn thương lâm sàng (Max 5MB)</span>
-                              </div>
-                            ) : (
-                              <input
-                                type="text"
-                                placeholder="Nhập nội dung câu trả lời..."
-                                className="base-input text-xs col-span-full"
-                                disabled
-                              />
-                            )}
-                          </div>
-                        </div>
-                      ))
+                          <span className="isax icon-edit-2 text-xs"></span>
+                          <span>Sửa</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTemplate(tmpl.id);
+                          }}
+                          className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50 text-[11px] cursor-pointer"
+                        >
+                          <span className="isax icon-trash text-xs"></span>
+                          <span>Xóa</span>
+                        </button>
+                      </div>
                     )}
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Sections & Questions Studio (8 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="base-card p-6 space-y-6">
+              <div className="pb-3 border-b border-[var(--base-border-opaque)] flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-[var(--base-brand-blue)] bg-blue-50 px-2 py-0.5">
+                      {selectedTemplate.code}
+                    </span>
+                    <h3 className="text-base font-bold text-gray-900">{selectedTemplate.name}</h3>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">{selectedTemplate.description}</p>
                 </div>
-              ))}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleOpenAddSection}
+                    className="base-btn base-btn-secondary base-btn-compact text-xs cursor-pointer"
+                  >
+                    <span className="isax icon-folder-add text-sm"></span>
+                    <span>Thêm Phân Mục</span>
+                  </button>
+                  <button
+                    onClick={() => handleOpenAddQuestion(selectedTemplate.sections[0]?.id)}
+                    disabled={selectedTemplate.sections.length === 0}
+                    className="base-btn base-btn-primary base-btn-compact text-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="isax icon-add text-sm"></span>
+                    <span>Thêm Câu Hỏi</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {selectedTemplate.sections.map((sec, secIdx) => (
+                  <div
+                    key={sec.id}
+                    className="p-4 border border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)] space-y-3"
+                  >
+                    <div className="flex items-center justify-between font-bold text-xs text-[var(--base-brand-navy)] uppercase tracking-wider pb-2 border-b border-[var(--base-border-opaque)]">
+                      <div className="flex items-center gap-2">
+                        <span className="h-5 w-5 bg-[var(--base-brand-navy)] text-white text-[10px] font-mono flex items-center justify-center font-bold">
+                          {secIdx + 1}
+                        </span>
+                        <span>{sec.title}</span>
+                        <span className="base-tag base-tag-neutral text-[9px] lowercase font-normal">
+                          ({sec.filled_by || "both"})
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenAddQuestion(sec.id)}
+                          className="base-btn base-btn-secondary base-btn-mini text-[11px] cursor-pointer"
+                          title="Thêm câu hỏi vào phân mục này"
+                        >
+                          <span className="isax icon-add text-xs"></span>
+                          <span>Thêm câu hỏi</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenEditSection(sec)}
+                          className="base-btn base-btn-secondary base-btn-mini text-[11px] cursor-pointer"
+                          title="Sửa phân mục"
+                        >
+                          <span className="isax icon-edit-2 text-xs"></span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSection(sec.id)}
+                          className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50 text-[11px] cursor-pointer"
+                          title="Xóa phân mục"
+                        >
+                          <span className="isax icon-trash text-xs"></span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {sec.questions.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-gray-400 bg-white border border-[var(--base-border-opaque)]">
+                          Phân mục này chưa có câu hỏi nào. Nhấn &quot;Thêm câu hỏi&quot; để tạo câu hỏi đầu tiên.
+                        </div>
+                      ) : (
+                        sec.questions.map((q, qIdx) => (
+                          <div
+                            key={q.id}
+                            className="p-4 bg-white border border-[var(--base-border-opaque)] text-xs space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="font-semibold text-gray-900 text-sm">
+                                <span className="text-[var(--base-brand-blue)] mr-1.5 font-mono">
+                                  {secIdx + 1}.{qIdx + 1}
+                                </span>
+                                {q.content}
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="base-tag base-tag-neutral text-[9px] uppercase font-bold font-mono">
+                                  {q.type}
+                                </span>
+                                <button
+                                  onClick={() => handleOpenEditQuestion(sec.id, q)}
+                                  className="base-btn base-btn-secondary base-btn-mini text-gray-600 hover:text-gray-900 cursor-pointer"
+                                  title="Sửa câu hỏi (ques02)"
+                                >
+                                  <span className="isax icon-edit-2 text-xs"></span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteQuestion(sec.id, q.id)}
+                                  className="base-btn base-btn-secondary base-btn-mini text-rose-600 hover:bg-rose-50 cursor-pointer"
+                                  title="Xóa câu hỏi (ques03)"
+                                >
+                                  <span className="isax icon-trash text-xs"></span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {q.parent_question_id && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-amber-700 bg-amber-50 px-2.5 py-1">
+                                <span className="isax icon-routing text-xs font-bold"></span>
+                                <span>
+                                  Logic rẽ nhánh: Chỉ hiện khi câu hỏi cha ({q.parent_question_id}) = &quot;
+                                  <strong>{q.show_if_answer}</strong>&quot;
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--base-border-opaque)]">
+                              {q.options && q.options.length > 0 ? (
+                                q.options.map((opt, oIdx) => (
+                                  <label
+                                    key={oIdx}
+                                    className="flex items-center gap-2.5 p-2.5 border border-[var(--base-border-opaque)] hover:bg-gray-50 transition cursor-pointer select-none"
+                                  >
+                                    <input
+                                      type={q.type === "checkbox" ? "checkbox" : "radio"}
+                                      name={`preview-${q.id}`}
+                                      defaultChecked={oIdx === 0}
+                                      className="h-4 w-4 text-[var(--base-brand-blue)] border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-800 font-medium">{opt}</span>
+                                  </label>
+                                ))
+                              ) : q.type === "file_upload" ? (
+                                <div className="col-span-full p-3 bg-gray-50 text-gray-500 text-center flex items-center justify-center gap-2">
+                                  <span className="isax icon-camera text-base"></span>
+                                  <span>Khu vực tải ảnh tổn thương lâm sàng (Max 5MB)</span>
+                                </div>
+                              ) : (
+                                <input
+                                  type={q.type === "number" ? "number" : "text"}
+                                  placeholder="Nhập nội dung câu trả lời..."
+                                  className="base-input text-xs col-span-full"
+                                  disabled
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* MODAL 1: TẠO MẪU PHIẾU KHÁM MỚI (tmpl01) */}
       {showCreateTemplateModal && (
@@ -588,7 +644,7 @@ export default function FormBuilder() {
           <div className="base-modal-dialog max-w-md w-full">
             <div className="base-modal-header">
               <h3 className="base-modal-title">Tạo Mẫu Phiếu Khám Mới</h3>
-              <button onClick={() => setShowCreateTemplateModal(false)} className="text-gray-400 hover:text-gray-700">
+              <button onClick={() => setShowCreateTemplateModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
             </div>
@@ -659,7 +715,7 @@ export default function FormBuilder() {
           <div className="base-modal-dialog max-w-md w-full">
             <div className="base-modal-header">
               <h3 className="base-modal-title">Cập Nhật Mẫu Phiếu Khám</h3>
-              <button onClick={() => setShowEditTemplateModal(false)} className="text-gray-400 hover:text-gray-700">
+              <button onClick={() => setShowEditTemplateModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
             </div>
@@ -733,7 +789,7 @@ export default function FormBuilder() {
                   setShowAddSectionModal(false);
                   setShowEditSectionModal(false);
                 }}
-                className="text-gray-400 hover:text-gray-700"
+                className="text-gray-400 hover:text-gray-700 cursor-pointer"
               >
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
@@ -797,7 +853,7 @@ export default function FormBuilder() {
       )}
 
       {/* MODAL 4: THÊM / SỬA CÂU HỎI KÈM LOGIC RẼ NHÁNH (ques01, ques02) */}
-      {(showAddQuestionModal || showEditQuestionModal) && (
+      {(showAddQuestionModal || showEditQuestionModal) && selectedTemplate && (
         <div className="base-modal-backdrop">
           <div className="base-modal-dialog max-w-lg w-full">
             <div className="base-modal-header">
@@ -809,7 +865,7 @@ export default function FormBuilder() {
                   setShowAddQuestionModal(false);
                   setShowEditQuestionModal(false);
                 }}
-                className="text-gray-400 hover:text-gray-700"
+                className="text-gray-400 hover:text-gray-700 cursor-pointer"
               >
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
@@ -839,6 +895,7 @@ export default function FormBuilder() {
                       <option value="radio">Chọn một (Radio)</option>
                       <option value="checkbox">Chọn nhiều (Checkbox)</option>
                       <option value="text">Nhập văn bản (Text)</option>
+                      <option value="number">Nhập số định lượng (Number)</option>
                       <option value="file_upload">Tải ảnh tổn thương (File Upload)</option>
                     </select>
                   </div>
@@ -847,7 +904,8 @@ export default function FormBuilder() {
                     <select
                       value={targetSectionId}
                       onChange={(e) => setTargetSectionId(e.target.value)}
-                      className="base-input text-xs"
+                      disabled={showEditQuestionModal}
+                      className="base-input text-xs disabled:bg-gray-100"
                     >
                       {selectedTemplate.sections.map((sec) => (
                         <option key={sec.id} value={sec.id}>
@@ -858,26 +916,27 @@ export default function FormBuilder() {
                   </div>
                 </div>
 
-                {questionForm.type !== "text" && questionForm.type !== "file_upload" && (
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">
-                      Các lựa chọn (phân cách bằng dấu phẩy) *
-                    </label>
-                    <input
-                      type="text"
-                      value={questionForm.options}
-                      onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })}
-                      placeholder="VD: Có, Không, Không rõ"
-                      className="base-input text-xs"
-                      required
-                    />
-                  </div>
-                )}
+                {questionForm.type !== "text" &&
+                  questionForm.type !== "number" &&
+                  questionForm.type !== "file_upload" && (
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 block mb-1">
+                        Các lựa chọn (phân cách bằng dấu phẩy) *
+                      </label>
+                      <input
+                        type="text"
+                        value={questionForm.options}
+                        onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })}
+                        placeholder="VD: Có, Không, Không rõ"
+                        className="base-input text-xs"
+                        required
+                      />
+                    </div>
+                  )}
 
-                {/* Phân nhánh logic thông minh (Slide 11: parent_question_id & show_if_answer) */}
                 <div className="p-3 bg-amber-50/60 border border-amber-200 space-y-2 mt-2">
                   <span className="text-[11px] font-bold text-amber-900 block uppercase">
-                    Logic Rẽ Nhánh Phụ Thuộc (Tùy chọn)
+                    Logic Rẽ Nhánh Phụ Thuộc (Slide 11)
                   </span>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -933,12 +992,12 @@ export default function FormBuilder() {
       )}
 
       {/* Modal JSON Schema */}
-      {showJsonModal && (
+      {showJsonModal && selectedTemplate && (
         <div className="base-modal-backdrop">
           <div className="base-modal-dialog max-w-2xl w-full">
             <div className="base-modal-header">
               <h3 className="base-modal-title">Cấu Trúc Cây Biểu Mẫu 4 Tầng (JSON Schema)</h3>
-              <button onClick={() => setShowJsonModal(false)} className="text-gray-400 hover:text-gray-700">
+              <button onClick={() => setShowJsonModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
             </div>

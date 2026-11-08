@@ -2,7 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api/v1",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
@@ -16,6 +16,9 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     return config;
   },
   (error) => {
@@ -28,10 +31,11 @@ apiClient.interceptors.response.use(
   (response) => {
     const resData = response.data;
 
-    // Nếu backend trả về định dạng chuẩn ApiResponse
-    if (resData && typeof resData.code === "number") {
+    // Nếu backend trả về định dạng chuẩn ApiResponse (code có thể là number hoặc string)
+    if (resData && resData.code !== undefined) {
+      const codeNum = Number(resData.code);
       // 1000 (OK) hoặc 1001 (Created)
-      if (resData.code === 1000 || resData.code === 1001) {
+      if (codeNum === 1000 || codeNum === 1001) {
         return resData;
       }
 
@@ -46,14 +50,17 @@ apiClient.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
       const errorMessage = data?.message || "Đã xảy ra lỗi khi gọi máy chủ";
+      const publicPaths = ["/login", "/register", "/forgot-password", "/emergency-triage"];
 
       switch (status) {
         case 401:
-          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          if (window.location.pathname !== "/login") {
+          if (!publicPaths.includes(window.location.pathname)) {
+            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
             window.location.href = "/login";
+          } else {
+            toast.error(errorMessage);
           }
           break;
         case 403:

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import apiClient from "../../services/apiClient";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -50,27 +51,33 @@ export default function RegisterPage() {
   const bmiClassification = getBmiClassification(bmiValue);
 
   // Handle HIS Lookup
-  const handleLookupHis = () => {
+  const handleLookupHis = async () => {
     if (!hisCodeInput.trim()) {
       toast.error("Vui lòng nhập mã bệnh nhân HIS!");
       return;
     }
-    setFullName("Nguyễn Thị Mai");
-    setPhone("0988 776 655");
-    setYearOfBirth("1995");
-    setGender("female");
-    setHeightCm("162");
-    setWeightKg("54");
-    setCareer("Nhân viên văn phòng");
-    setBhyt("DN4010120894567");
-    setAddress("Phường Phương Mai, Quận Đống Đa, Hà Nội");
-    setHisFound(true);
-    toast.success("Đã tìm thấy thông tin bệnh nhân trên hệ thống HIS!");
+    try {
+      const res = await apiClient.get("/auth/his-lookup", {
+        params: { code: hisCodeInput.trim() },
+      });
+      const d = res.data || {};
+      if (d.full_name) setFullName(d.full_name);
+      if (d.phone) setPhone(d.phone);
+      if (d.date_of_birth) setYearOfBirth(String(d.date_of_birth).slice(0, 4));
+      if (d.gender) setGender(d.gender === "Nữ" ? "female" : "male");
+      if (d.bhyt_code !== undefined) setBhyt(d.bhyt_code);
+      if (d.address) setAddress(d.address);
+      setHisFound(true);
+      toast.success("Đã tìm thấy thông tin bệnh nhân trên hệ thống HIS!");
+    } catch {
+      setHisFound(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!fullName || !phone) {
+    const cleanPhone = phone.replace(/\s+/g, "").trim();
+    if (!fullName.trim() || !cleanPhone) {
       toast.error("Vui lòng điền Họ và tên và Số điện thoại!");
       return;
     }
@@ -88,11 +95,25 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await apiClient.post("/auth/signup", {
+        full_name: fullName.trim(),
+        phone: cleanPhone,
+        password,
+        year_of_birth: Number(yearOfBirth),
+        gender,
+        career,
+        health_insurance_number: bhyt.trim() || undefined,
+        city_address: address.trim() || undefined,
+        ma_his: regMode === "has_his" && hisCodeInput.trim() ? hisCodeInput.trim() : undefined,
+      });
       toast.success("Đăng ký hồ sơ bệnh nhân thành công! Vui lòng đăng nhập.");
       navigate("/login");
-    }, 600);
+    } catch {
+      // Error toast displayed by apiClient
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

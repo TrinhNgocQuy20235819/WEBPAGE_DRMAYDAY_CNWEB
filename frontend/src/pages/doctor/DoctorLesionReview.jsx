@@ -1,40 +1,131 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import apiClient from "../../services/apiClient";
+
+const MILESTONE_META = {
+  start: {
+    label: "1. Khởi phát",
+    tag: "base-tag-warning",
+    fallbackDesc: "Sẩn đỏ li ti mới xuất hiện kèm cảm giác châm chích",
+    fallbackUrl: "/images/clinic/clinic-urticaria-rash.jpg",
+  },
+  peak: {
+    label: "2. Đỉnh điểm",
+    tag: "base-tag-negative",
+    fallbackDesc: "Các nốt sẩn kết tụ thành mảng phù nề lớn, ngứa dữ dội",
+    fallbackUrl: "/images/clinic/clinic-examination.jpg",
+  },
+  normal: {
+    label: "3. Thuyên giảm",
+    tag: "base-tag-positive",
+    fallbackDesc: "Nốt sẩn nhạt dần và lặn hoàn toàn không để lại vết thâm",
+    fallbackUrl: "/images/clinic/clinic-consultation-02.jpg",
+  },
+};
 
 export default function DoctorLesionReview() {
-  const [selectedPatient, setSelectedPatient] = useState("Nguyễn Thị Mai (BA-2026-1042)");
+  const [records, setRecords] = useState([]);
+  const [selectedRecordId, setSelectedRecordId] = useState("");
+  const [photos, setPhotos] = useState([]);
+  const [runningAiId, setRunningAiId] = useState(null);
   const [doctorAssessment, setDoctorAssessment] = useState(
-    "Hình ảnh giai đoạn đỉnh điểm cho thấy nhiều sẩn phù dạng bản đồ rải rác cẳng tay và thân mình, bờ rõ, không có dấu hiệu xuất huyết dưới da hay bọng nước. Đợt thuyên giảm sau 6 giờ lặn hoàn toàn không để lại vết thâm hay sẹo, phù hợp bệnh cảnh mày đay mạn tự phát (CSU)."
+    "Hình ảnh giai đoạn đỉnh điểm cho thấy nhiều sẩn phù dạng bản đồ rải rác, bờ rõ, không có dấu hiệu xuất huyết dưới da hay bọng nước. Giai đoạn thuyên giảm lặn hoàn toàn không để lại vết thâm hay sẹo, phù hợp bệnh cảnh mày đay mạn tự phát (CSU)."
   );
 
-  const stages = [
-    {
-      title: "Khởi phát",
-      time: "08/03/2026 07:30",
-      description: "Sẩn đỏ li ti, bắt đầu cảm giác châm chích và ngứa",
-      url: "/images/clinic/clinic-urticaria-rash.jpg",
-      tag: "base-tag-warning",
-    },
-    {
-      title: "Đỉnh điểm",
-      time: "08/03/2026 12:45",
-      description: "Các nốt sẩn kết tụ thành mảng phù nề lớn, ngứa dữ dội",
-      url: "/images/clinic/clinic-examination.jpg",
-      tag: "base-tag-negative",
-    },
-    {
-      title: "Thuyên giảm",
-      time: "08/03/2026 17:15",
-      description: "Nốt sẩn nhạt dần và lặn biến mất hoàn toàn không để lại sẹo",
-      url: "/images/clinic/clinic-consultation-02.jpg",
-      tag: "base-tag-positive",
-    },
-  ];
+  useEffect(() => {
+    apiClient
+      .get("/doctor/queue", { params: { status: "all", include_completed: "true" } })
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setRecords(list);
+        const savedId = sessionStorage.getItem("activeDoctorRecordId");
+        const picked =
+          (savedId && list.find((r) => String(r.medical_record_id) === String(savedId))) ||
+          list.find((r) => r.status === "in_progress") ||
+          list[0];
+        if (picked) {
+          setSelectedRecordId(String(picked.medical_record_id));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const loadLesions = useCallback(async (recId) => {
+    if (!recId) return;
+    try {
+      const res = await apiClient.get(`/doctor/medical-records/${recId}/lesion-images`);
+      const episodes = Array.isArray(res.data) ? res.data : [];
+      const flat = [];
+      for (const ep of episodes) {
+        for (const loc of ep.locations || []) {
+          for (const p of loc.photos || []) {
+            flat.push({
+              ...p,
+              episode_name: ep.name,
+              body_part: loc.body_part,
+            });
+          }
+        }
+        for (const p of ep.photos || []) {
+          flat.push({
+            ...p,
+            episode_name: ep.name,
+            body_part: "Toàn thân",
+          });
+        }
+      }
+      setPhotos(flat);
+    } catch {
+      setPhotos([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedRecordId) {
+      sessionStorage.setItem("activeDoctorRecordId", String(selectedRecordId));
+      loadLesions(selectedRecordId);
+    }
+  }, [selectedRecordId, loadLesions]);
+
+  const handleRunAi = async (photo) => {
+    setRunningAiId(photo.photo_id);
+    try {
+      const res = await apiClient.post("/ai/inference", {
+        photo_id: Number(photo.photo_id),
+        attachment_id: photo.attachment_id ? Number(photo.attachment_id) : undefined,
+      });
+      const ai = res.data || {};
+      toast.success(
+        `AI UrticariaNet: Đếm được ${ai.hives_count} nốt sẩn • AUAS = ${ai.local_auas}`
+      );
+      await loadLesions(selectedRecordId);
+    } catch {
+      // Handled by interceptor
+    } finally {
+      setRunningAiId(null);
+    }
+  };
 
   const handleSaveAssessment = () => {
-    toast.success("Đã lưu kết quả đối chiếu tổn thương vào hồ sơ bệnh án!");
+    if (selectedRecordId) {
+      localStorage.setItem(`lesion_note_${selectedRecordId}`, doctorAssessment);
+    }
+    toast.success("Đã lưu kết quả đối chiếu tổn thương vào hồ sơ lâm sàng!");
   };
+
+  const orderedMilestones = ["start", "peak", "normal"];
+  const stageCards = orderedMilestones.map((ms) => {
+    const meta = MILESTONE_META[ms];
+    const found = photos.find((p) => p.milestone === ms);
+    return {
+      milestone: ms,
+      meta,
+      photo: found || null,
+    };
+  });
+
+  const capturedCount = stageCards.filter((s) => s.photo !== null).length;
 
   return (
     <div className="space-y-6">
@@ -42,16 +133,20 @@ export default function DoctorLesionReview() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <h1 className="base-hero-title">Ảnh Tổn Thương 3 Mốc</h1>
+            <h1 className="base-hero-title">Đối Chiếu Ảnh Tổn Thương 3 Mốc &amp; AI</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-camera text-sm"></span>
-              <span>Đối chiếu chu kỳ sẩn phù qua 3 giai đoạn</span>
+              <span>Đối chiếu chu kỳ sẩn phù 3 giai đoạn và đếm nốt sẩn AI tự động (Slide 9)</span>
             </p>
           </div>
           <div className="base-hero-actions">
+            <Link to="/doctor/prescriptions" className="base-btn-hero-primary">
+              <span className="isax icon-health text-sm"></span>
+              <span>Khám &amp; Kê đơn</span>
+            </Link>
             <Link to="/doctor" className="base-btn-hero-primary">
               <span className="isax icon-arrow-left-2 text-sm"></span>
-              <span>Quay lại</span>
+              <span>Hàng đợi</span>
             </Link>
           </div>
         </div>
@@ -62,54 +157,104 @@ export default function DoctorLesionReview() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <span className="text-xs font-bold text-gray-700 shrink-0">Hồ sơ bệnh nhân:</span>
           <select
-            value={selectedPatient}
-            onChange={(e) => setSelectedPatient(e.target.value)}
-            className="base-input text-xs font-bold max-w-xs"
+            value={selectedRecordId}
+            onChange={(e) => setSelectedRecordId(e.target.value)}
+            className="base-input text-xs font-bold max-w-sm"
           >
-            <option value="Nguyễn Thị Mai (BA-2026-1042)">Nguyễn Thị Mai (BA-2026-1042)</option>
-            <option value="Trần Văn Nam (BA-2026-1043)">Trần Văn Nam (BA-2026-1043)</option>
-            <option value="Lê Hoàng Yến (BA-2026-1040)">Lê Hoàng Yến (BA-2026-1040)</option>
+            {records.map((r) => (
+              <option key={r.medical_record_id} value={r.medical_record_id}>
+                {r.patient_name} ({r.record_code})
+              </option>
+            ))}
           </select>
         </div>
 
-        <span className="base-tag base-tag-info font-bold text-xs">
-          Đủ 3 mốc
+        <span className={`base-tag font-bold text-xs ${capturedCount === 3 ? "base-tag-positive" : "base-tag-info"}`}>
+          Đã có {capturedCount}/3 mốc ảnh
         </span>
       </div>
 
       {/* 3 Mốc Ảnh Đối Chiếu */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stages.map((stage, idx) => (
-          <div key={idx} className="base-card overflow-hidden flex flex-col justify-between">
+        {stageCards.map(({ milestone, meta, photo }) => (
+          <div key={milestone} className="base-card overflow-hidden flex flex-col justify-between">
             <div>
               <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
-                <img
-                  src={stage.url}
-                  alt={stage.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = "/images/clinic/clinic-urticaria-rash.jpg";
-                  }}
-                />
-                <span className={`absolute top-2.5 left-2.5 base-tag ${stage.tag} font-bold text-[10px] shadow-sm`}>
-                  {stage.title.split(":")[0]}
+                {photo ? (
+                  <img
+                    src={photo.image_url || meta.fallbackUrl}
+                    alt={meta.label}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = meta.fallbackUrl;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-xs p-4 text-center">
+                    <span className="isax icon-camera text-3xl mb-2 text-gray-300"></span>
+                    <span>Bệnh nhân chưa tải ảnh giai đoạn này</span>
+                  </div>
+                )}
+                <span className={`absolute top-2.5 left-2.5 base-tag ${meta.tag} font-bold text-[10px] shadow-sm`}>
+                  {meta.label}
                 </span>
               </div>
 
-              <div className="p-4 space-y-1.5">
+              <div className="p-4 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <h3 className="font-bold text-gray-900">{stage.title.split(":")[1]}</h3>
+                  <h3 className="font-bold text-gray-900">
+                    {photo ? photo.body_part : "Chưa ghi nhận vị trí"}
+                  </h3>
+                  {photo?.itch_score != null && (
+                    <span className="font-mono text-[11px] text-rose-600 font-bold">
+                      Ngứa NRS: {photo.itch_score}/10
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] font-mono text-gray-500 flex items-center gap-1">
                   <span className="isax icon-clock text-xs"></span>
-                  <span>{stage.time}</span>
+                  <span>
+                    {photo?.captured_at
+                      ? new Date(photo.captured_at).toLocaleString("vi-VN")
+                      : "Chưa có thời gian chụp"}
+                  </span>
                 </div>
-                <p className="text-xs text-gray-600 mt-2 leading-relaxed">{stage.description}</p>
+
+                {photo && (
+                  <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">AI đếm nốt sẩn:</span>
+                      <strong className="font-mono text-[var(--base-brand-navy)]">
+                        {photo.hives_count != null ? `${photo.hives_count} nốt` : "Chưa chạy AI"}
+                      </strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Chỉ số AUAS cục bộ:</span>
+                      <strong className="font-mono text-[var(--base-brand-blue)]">
+                        {photo.auas != null ? `${photo.auas} / 3.0` : "—"}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-600 leading-relaxed">{meta.fallbackDesc}</p>
               </div>
             </div>
 
-            <div className="p-3 border-t border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)] text-[11px] text-[var(--base-brand-blue)] font-bold text-center">
-              Mốc chuẩn lâm sàng
+            <div className="p-3 border-t border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)] flex items-center justify-between">
+              <span className="text-[11px] text-gray-500 font-medium">EAACI Wheal Counter</span>
+              {photo ? (
+                <button
+                  type="button"
+                  disabled={runningAiId === photo.photo_id}
+                  onClick={() => handleRunAi(photo)}
+                  className="base-btn base-btn-secondary base-btn-mini text-[11px] font-bold text-[var(--base-brand-blue)] cursor-pointer"
+                >
+                  {runningAiId === photo.photo_id ? "Đang đếm..." : "Chạy AI Đếm Sẩn"}
+                </button>
+              ) : (
+                <span className="text-[11px] text-gray-400">Chờ ảnh</span>
+              )}
             </div>
           </div>
         ))}

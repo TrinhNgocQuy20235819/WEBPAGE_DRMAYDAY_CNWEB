@@ -28,9 +28,12 @@ async function getListUsers(req, res) {
     let countSql = `SELECT COUNT(*) AS total FROM public.taikhoan tk JOIN public.nguoi n ON n.ma_nguoi = tk.ma_nguoi`;
     let listSql = `
       SELECT n.ma_nguoi AS user_id, n.ho_ten AS ffull_name, n.so_dien_thoai AS phone,
-             tk.ma_vai_tro AS role_id, tk.trang_thai_hoat_dong AS is_active
+             n.gioi_tinh AS gender, tk.ma_vai_tro AS role_id, tk.trang_thai_hoat_dong AS is_active,
+             vt.ten_vai_tro AS role_name, nv.ma_chi_nhanh AS db_branch_id
       FROM public.taikhoan tk
       JOIN public.nguoi n ON n.ma_nguoi = tk.ma_nguoi
+      LEFT JOIN public.vaitro vt ON vt.ma_vai_tro = tk.ma_vai_tro
+      LEFT JOIN public.nhanvien nv ON nv.ma_nhan_vien = n.ma_nguoi
     `;
     const params = [];
 
@@ -47,13 +50,25 @@ async function getListUsers(req, res) {
 
     const listRes = await query(listSql, [...params, limit, offset]);
 
-    const data = listRes.rows.map(row => ({
-      user_id: Number(row.user_id),
-      ffull_name: row.ffull_name,
-      phone: row.phone,
-      role_id: Number(row.role_id),
-      is_active: row.is_active ? 1 : 0
-    }));
+    const data = listRes.rows.map(row => {
+      const uid = Number(row.user_id);
+      const assignment = (state.staffAssignments && state.staffAssignments[uid]) || {};
+      return {
+        user_id: uid,
+        ffull_name: row.ffull_name,
+        full_name: row.ffull_name,
+        phone: row.phone,
+        gender: row.gender === 'Nu' ? 'female' : 'male',
+        role_id: Number(row.role_id),
+        role_name: row.role_name || null,
+        is_active: row.is_active ? 1 : 0,
+        branch_id: assignment.branch_id || (row.db_branch_id ? Number(row.db_branch_id) : null),
+        department_id: assignment.department_id || null,
+        room_id: assignment.room_id || null,
+        employee_code: assignment.employee_code || `NV-${String(uid).padStart(3, '0')}`,
+        specialty: assignment.specialty || null
+      };
+    });
 
     return res.status(200).json({
       code: '1000',
@@ -178,13 +193,27 @@ async function createUser(req, res) {
       [userId, role_id, cleanPhone, hash, activeBool]
     );
 
-    // Nếu là nhân sự (bác sĩ/điều dưỡng), đồng bộ nhanvien
-    if (Number(role_id) === 2 || Number(role_id) === 3) {
-      await query(
-        `INSERT INTO public.nhanvien (ma_nhan_vien, ma_chi_nhanh)
-         VALUES ($1, 1) ON CONFLICT (ma_nhan_vien) DO NOTHING`,
-        [userId]
-      );
+    // Nếu là nhân sự (bác sĩ/điều dưỡng), đồng bộ nhanvien & phân công công tác ban đầu
+    const bId = req.body.branch_id ? Number(req.body.branch_id) : 1;
+    const dId = req.body.department_id ? Number(req.body.department_id) : null;
+    const rId = req.body.room_id ? Number(req.body.room_id) : null;
+    if (Number(role_id) === 2 || Number(role_id) === 3 || Number(role_id) === 1) {
+      if (Number(role_id) === 2 || Number(role_id) === 3) {
+        await query(
+          `INSERT INTO public.nhanvien (ma_nhan_vien, ma_chi_nhanh)
+           VALUES ($1, $2) ON CONFLICT (ma_nhan_vien) DO NOTHING`,
+          [userId, bId]
+        );
+      }
+      state.staffAssignments[userId] = {
+        user_id: userId,
+        branch_id: bId,
+        department_id: dId,
+        room_id: rId,
+        employee_code: req.body.employee_code || `${Number(role_id) === 2 ? 'BS' : Number(role_id) === 3 ? 'DD' : 'ADM'}-${userId}`,
+        specialty: req.body.specialty || (Number(role_id) === 2 ? 'Da liễu & Miễn dịch' : 'Điều dưỡng lâm sàng')
+      };
+      saveStore();
     }
 
     const createdData = {
@@ -577,7 +606,154 @@ async function revokeRolePermission(req, res) {
   }
 }
 
+/**
+ * admin00: get_dashboard_summary - Tổng quan bảng điều khiển Quản trị Bệnh viện
+ * Endpoint: GET /api/v1/admin/dashboard
+ */
+async function getDashboardSummary(_req, res) {
+  try {
+    const kpiRes = await query(`
+      SELECT
+        COUNT(*) FILTER (WHERE trang_thai = 'pending')::int AS pending_count,
+        COUNT(*) FILTER (WHERE trang_thai = 'in_progress')::int AS in_progress_count,
+        COUNT(*) FILTER (WHERE trang_thai = 'completed')::int AS completed_count,
+        COUNT(*)::int AS total_records
+      FROM public.hosobenhan
+    `);
+    const branchCountRes = await query(`SELECT COUNT(*)::int AS cnt FROM public.chinhanh`);
+    const userCountsRes = await query(`
+      SELECT
+        COUNT(*) FILTER (WHERE ma_vai_tro IN (1, 2, 3))::int AS staff_count,
+        COUNT(*) FILTER (WHERE ma_vai_tro = 4)::int AS patient_count
+      FROM public.taikhoan
+    `);
+
+    const recentRes = await query(`
+      SELECT hs.ma_ho_so, hs.ma_benh_nhan, hs.loai_benh_an, hs.trang_thai,
+             hs.thoi_diem_kham_lan_dau, hs.chan_doan_ban_dau_phong_kham,
+             bn_ng.ho_ten AS patient_name, bn_ng.so_dien_thoai AS patient_phone,
+             pk.ma_bac_si, bs_ng.ho_ten AS doctor_name
+      FROM public.hosobenhan hs
+      JOIN public.nguoi bn_ng ON bn_ng.ma_nguoi = hs.ma_benh_nhan
+      LEFT JOIN LATERAL (
+        SELECT ma_bac_si
+        FROM public.phienkham
+        WHERE ma_ho_so = hs.ma_ho_so
+        ORDER BY lan_kham_thu DESC
+        LIMIT 1
+      ) pk ON TRUE
+      LEFT JOIN public.nguoi bs_ng ON bs_ng.ma_nguoi = pk.ma_bac_si
+      ORDER BY hs.thoi_diem_kham_lan_dau DESC NULLS LAST, hs.ma_ho_so DESC
+      LIMIT 15
+    `);
+
+    const staffRes = await query(`
+      SELECT n.ma_nguoi AS user_id, n.ho_ten AS full_name, n.so_dien_thoai AS phone,
+             tk.ma_vai_tro AS role_id, vt.ten_vai_tro AS role_name, tk.trang_thai_hoat_dong AS is_active,
+             nv.ma_chi_nhanh AS db_branch_id
+      FROM public.taikhoan tk
+      JOIN public.nguoi n ON n.ma_nguoi = tk.ma_nguoi
+      JOIN public.vaitro vt ON vt.ma_vai_tro = tk.ma_vai_tro
+      LEFT JOIN public.nhanvien nv ON nv.ma_nhan_vien = n.ma_nguoi
+      WHERE tk.ma_vai_tro IN (1, 2, 3)
+      ORDER BY tk.ma_vai_tro ASC, n.ma_nguoi ASC
+    `);
+
+    const branchesRes = await query(`SELECT ma_chi_nhanh AS id, ten_chi_nhanh AS name, dia_chi AS address, so_dien_thoai AS phone, trang_thai AS is_active FROM public.chinhanh ORDER BY ma_chi_nhanh ASC`);
+    const branchMap = {};
+    for (const b of branchesRes.rows) {
+      branchMap[Number(b.id)] = b.name;
+    }
+    const depts = state.departments ? Object.values(state.departments) : [];
+    const rooms = state.rooms ? Object.values(state.rooms) : [];
+    const deptMap = {};
+    for (const d of depts) deptMap[Number(d.id)] = d.name;
+    const roomMap = {};
+    for (const r of rooms) roomMap[Number(r.id)] = r.name;
+
+    const clinicalStaff = staffRes.rows.map((s) => {
+      const uid = Number(s.user_id);
+      const assign = (state.staffAssignments && state.staffAssignments[uid]) || {};
+      const bId = assign.branch_id || (s.db_branch_id ? Number(s.db_branch_id) : 1);
+      const dId = assign.department_id || null;
+      const rId = assign.room_id || null;
+      return {
+        user_id: uid,
+        full_name: s.full_name,
+        phone: s.phone,
+        role_id: Number(s.role_id),
+        role_name: s.role_name,
+        is_active: Boolean(s.is_active),
+        employee_code: assign.employee_code || `NV-${uid}`,
+        specialty: assign.specialty || 'Đa khoa / Da liễu',
+        branch_id: bId,
+        branch_name: branchMap[bId] || `Cơ sở ${bId}`,
+        department_id: dId,
+        department_name: dId ? deptMap[dId] || `Khoa ${dId}` : 'Chưa phân khoa',
+        room_id: rId,
+        room_name: rId ? roomMap[rId] || `Phòng ${rId}` : 'Chưa phân phòng'
+      };
+    });
+
+    const recentRecords = recentRes.rows.map((r) => {
+      const recId = Number(r.ma_ho_so);
+      const docAssign = r.ma_bac_si && state.staffAssignments ? state.staffAssignments[Number(r.ma_bac_si)] : null;
+      const rId = docAssign?.room_id;
+      return {
+        medical_record_id: recId,
+        record_code: `BA-2026-${String(recId).padStart(4, '0')}`,
+        patient_id: Number(r.ma_benh_nhan),
+        patient_name: r.patient_name,
+        patient_phone: r.patient_phone,
+        loai_benh_an: r.loai_benh_an,
+        clinical_type: r.loai_benh_an === 'MAN' ? 'chronic' : 'acute',
+        diagnosis: r.chan_doan_ban_dau_phong_kham || (r.loai_benh_an === 'MAN' ? 'Mày đay mạn tính' : 'Mày đay cấp tính'),
+        status: r.trang_thai,
+        doctor_name: r.doctor_name || null,
+        room_name: rId && roomMap[rId] ? roomMap[rId] : 'Phòng Khám Tiếp Đón',
+        created_at: r.thoi_diem_kham_lan_dau ? new Date(r.thoi_diem_kham_lan_dau).toISOString() : null
+      };
+    });
+
+    const templatesObj = state.customTemplates || {};
+    const templates = Object.values(templatesObj).map((t) => ({
+      code_template: t.code_template || t.template_id,
+      name: t.name,
+      version: t.version || '1.0',
+      is_active: String(t.is_active ?? '1') === '1',
+      sections_count: Array.isArray(t.sections) ? t.sections.length : 0,
+      questions_count: Array.isArray(t.sections)
+        ? t.sections.reduce((acc, s) => acc + (Array.isArray(s.questions) ? s.questions.length : 0), 0)
+        : 0
+    }));
+
+    return sendResponse(res, RESPONSE_CODES.OK, {
+      kpis: {
+        pending_count: kpiRes.rows[0]?.pending_count || 0,
+        in_progress_count: kpiRes.rows[0]?.in_progress_count || 0,
+        completed_count: kpiRes.rows[0]?.completed_count || 0,
+        total_records: kpiRes.rows[0]?.total_records || 0,
+        branches_count: branchCountRes.rows[0]?.cnt || 0,
+        departments_count: depts.length,
+        rooms_count: rooms.length,
+        staff_count: userCountsRes.rows[0]?.staff_count || 0,
+        patient_count: userCountsRes.rows[0]?.patient_count || 0
+      },
+      recent_records: recentRecords,
+      clinical_staff: clinicalStaff,
+      branches: branchesRes.rows,
+      departments: depts,
+      rooms,
+      templates
+    });
+  } catch (err) {
+    console.error('[AdminController] getDashboardSummary error:', err);
+    return sendResponse(res, RESPONSE_CODES.INTERNAL_ERROR, {}, err.message);
+  }
+}
+
 module.exports = {
+  getDashboardSummary,
   getListUsers,
   getUserDetails,
   createUser,

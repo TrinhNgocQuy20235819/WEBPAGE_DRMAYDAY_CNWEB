@@ -209,3 +209,10 @@ __pycache__/
 *$py.class
 doctor-hash.txt
 
+# Unified System Runtime & Node Dependencies
+node_modules/
+backend-benh-nhan/node_modules/
+backend-benh-nhan/data/
+data/
+
+

@@ -8,23 +8,36 @@ const JWT_SECRET = process.env.JWT_SECRET || 'drmayday_super_secret_jwt_key_2026
 const storePath = process.env.PATIENT_RUNTIME_STORE_PATH ||
   path.resolve(__dirname, '../../../backend-benh-nhan/data/runtime_store.json');
 
+let sharedRuntimeStore = null;
+try {
+  sharedRuntimeStore = require(path.resolve(__dirname, '../../../backend-benh-nhan/src/config/runtimeStore'));
+} catch (_err) {
+  sharedRuntimeStore = null;
+}
+
 function isRevoked(token, jti) {
+  if (sharedRuntimeStore && sharedRuntimeStore.state && sharedRuntimeStore.state.tokenBlacklist) {
+    const mem = sharedRuntimeStore.state.tokenBlacklist;
+    if (mem[token] || (jti && mem[jti])) return true;
+  }
   try {
     if (!fs.existsSync(storePath)) return false;
     const state = JSON.parse(fs.readFileSync(storePath, 'utf8'));
     return Boolean(state.tokenBlacklist?.[token] || (jti && state.tokenBlacklist?.[jti]));
   } catch (err) {
     console.error('[DoctorAuth] Cannot read shared token blacklist:', err.message);
-    return true;
+    return false;
   }
 }
 
 async function authenticateJWT(req, res, next) {
   try {
-    const header = req.headers.authorization || '';
+    const header = req.headers.authorization || req.headers.Authorization || '';
     if (!header.startsWith('Bearer ')) return sendResponse(res, RESPONSE_CODES.NOT_AUTHENTICATED);
     const token = header.slice(7).trim();
     if (!token) return sendResponse(res, RESPONSE_CODES.NOT_AUTHENTICATED);
+
+    if (isRevoked(token, null)) return sendResponse(res, RESPONSE_CODES.TOKEN_EXPIRED);
 
     let decoded;
     try {
@@ -45,7 +58,9 @@ async function authenticateJWT(req, res, next) {
     if (!result.rowCount) return sendResponse(res, RESPONSE_CODES.USER_NOT_FOUND);
     const account = result.rows[0];
     if (!account.trang_thai_hoat_dong) return sendResponse(res, RESPONSE_CODES.NOT_AUTHENTICATED);
-    if (account.ten_vai_tro !== 'bac_si') return sendResponse(res, RESPONSE_CODES.DOCTOR_ROLE_REQUIRED);
+    if (!['bac_si', 'dieu_duong', 'admin'].includes(account.ten_vai_tro)) {
+      return sendResponse(res, RESPONSE_CODES.DOCTOR_ROLE_REQUIRED);
+    }
     req.user = {
       user_id: Number(account.ma_nguoi), account_id: Number(account.ma_tai_khoan),
       role_id: Number(account.ma_vai_tro), role_name: account.ten_vai_tro,

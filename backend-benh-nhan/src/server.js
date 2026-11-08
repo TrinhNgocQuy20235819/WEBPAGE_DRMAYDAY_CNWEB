@@ -1,8 +1,12 @@
 /**
  * @file src/server.js
- * @description Điểm khởi chạy chính (Entrypoint) của Hệ thống Backend Phân hệ Bệnh nhân - Dự án DrMayDay.
+ * @description Điểm khởi chạy hợp nhất (Unified API Gateway) của Hệ thống DrMayDay:
  *  - Kết nối tới Cơ sở dữ liệu PostgreSQL (gốc từ repo mayday-database/final_restructured.sql, tuyệt đối không chỉnh sửa).
- *  - Cung cấp RESTful API tại `/api/v1/...` (và alias `/api/...`) theo đúng đặc tả 11 Slides và Tài liệu Thiết kế Hệ thống.
+ *  - Tích hợp đồng bộ cả 4 phân hệ trên cùng 1 tiến trình và cùng 1 CSDL:
+ *    1. Phân hệ Quản trị, RBAC, Topology & Form Builder (Đầu việc 1 - adminRoutes)
+ *    2. Phân hệ Bệnh nhân: Auth, Hồ sơ, Bệnh án, UAS7/AAS7, Tổn thương 3 mốc (Đầu việc 2 - patientRoutes)
+ *    3. Phân hệ Bác sĩ & Điều dưỡng: Hàng đợi, Nhận ca, Kê đơn, Xét nghiệm, Ảnh lâm sàng (Đầu việc 3 - doctorRoutes)
+ *    4. Hạ tầng Bảo mật dùng chung, Thông báo FCM & AI Đếm nốt sẩn mề đay (Đầu việc 4 - sharedInfraRoutes)
  *  - Chuẩn hóa định dạng JSON phản hồi: { code, message, data }.
  */
 
@@ -16,6 +20,8 @@ const { initDatabase } = require('./config/database');
 const { RESPONSE_CODES, sendResponse } = require('./config/responseCodes');
 const patientRoutes = require('./routes/patientRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const sharedInfraRoutes = require('./routes/sharedInfraRoutes');
+const doctorRoutes = require(path.resolve(__dirname, '../../backend-bac-si/src/routes/doctorRoutes'));
 
 const app = express();
 
@@ -32,15 +38,20 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 // Endpoint kiểm tra trạng thái hoạt động của máy chủ (Health Check)
 app.get(['/api/v1/health', '/api/health'], (_req, res) => {
   return sendResponse(res, RESPONSE_CODES.OK, {
-    service: 'DrMayDay - Patient Subsystem Backend (Phân hệ Bệnh nhân)',
+    service: 'DrMayDay Unified System Backend (Admin + Patient + Doctor + Shared Security/AI)',
     status: 'UP',
+    modules: ['admin-topology-formbuilder', 'patient-clinical-uas7-lesions', 'doctor-queue-rx-labs', 'shared-security-fcm-ai'],
     database_schema: 'mayday-database/final_restructured.sql (Unmodified)'
   });
 });
 
-// Gắn toàn bộ tuyến đường API của Phân hệ Admin và Phân hệ Bệnh nhân vào cả /api/v1 và /api
+// Gắn toàn bộ tuyến đường API của cả 4 Phân hệ vào /api/v1 và alias /api
 app.use('/api/v1', adminRoutes);
 app.use('/api', adminRoutes);
+app.use('/api/v1', doctorRoutes);
+app.use('/api', doctorRoutes);
+app.use('/api/v1', sharedInfraRoutes);
+app.use('/api', sharedInfraRoutes);
 app.use('/api/v1', patientRoutes);
 app.use('/api', patientRoutes);
 
@@ -80,12 +91,12 @@ app.use((err, _req, res, _next) => {
  */
 async function startServer(customPort) {
   await initDatabase();
-  const port = customPort !== undefined ? customPort : parseInt(process.env.PORT || '3000', 10);
+  const port = customPort !== undefined ? customPort : parseInt(process.env.PORT || '8080', 10);
   return new Promise((resolve) => {
     const server = app.listen(port, () => {
       const actualPort = server.address().port;
       console.log(
-        `[Server] DrMayDay Backend Phân hệ Bệnh nhân đang chạy tại http://localhost:${actualPort}`
+        `[Server] Hệ thống DrMayDay Unified Backend đang chạy tại http://localhost:${actualPort}`
       );
       resolve(server);
     });

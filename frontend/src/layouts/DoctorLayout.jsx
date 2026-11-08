@@ -1,23 +1,98 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { INITIAL_RECORDS } from "../services/mockData";
+import apiClient from "../services/apiClient";
+
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function formatNotifTime(iso) {
+  if (!iso) return "Vừa xong";
+  const diffMin = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (diffMin < 1) return "Vừa xong";
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} giờ trước`;
+  return new Date(iso).toLocaleDateString("vi-VN");
+}
 
 export default function DoctorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUser = getStoredUser();
 
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const userDropdownRef = useRef(null);
   const notifDropdownRef = useRef(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await apiClient.post("/auth/logout").catch(() => {});
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.clear();
     toast.success("Đã đăng xuất phiên làm việc của Bác sĩ");
     navigate("/login");
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get("/doctor/queue", { params: { status: "pending" } })
+      .then((res) => {
+        if (cancelled) return;
+        const items = Array.isArray(res.data) ? res.data : res.data?.items || [];
+        setPendingCount(items.length);
+      })
+      .catch(() => {});
+
+    apiClient
+      .get("/notifications")
+      .then((res) => {
+        if (cancelled) return;
+        const items = (res.data?.items || []).map((n) => ({
+          id: n.id,
+          title: n.title,
+          desc: n.message,
+          time: formatNotifTime(n.created_at),
+          unread: !n.is_read,
+          icon: n.type === "UAS7" ? "icon-chart-21" : "icon-user-add",
+          link: n.type === "UAS7" ? "/doctor/prescriptions" : "/doctor",
+        }));
+        setNotifications(items);
+        setUnreadCount(Number(res.data?.unread_count || 0));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
+  const handleMarkAllRead = async () => {
+    await apiClient.put("/notifications/read-all").catch(() => {});
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    setUnreadCount(0);
+    toast.success("Đã ghi nhận toàn bộ thông báo lâm sàng");
+    setNotifDropdownOpen(false);
+  };
+
+  const handleClickNotif = (n) => {
+    if (n.unread) {
+      apiClient.put(`/notifications/${n.id}/read`).catch(() => {});
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, unread: false } : x)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    setNotifDropdownOpen(false);
   };
 
   // Close dropdowns on outside click
@@ -39,8 +114,6 @@ export default function DoctorLayout() {
     setUserDropdownOpen(false);
     setNotifDropdownOpen(false);
   }, [location.pathname]);
-
-  const pendingCount = INITIAL_RECORDS.filter((r) => r.status === "pending").length;
 
   const clinicalNav = [
     {
@@ -66,27 +139,6 @@ export default function DoctorLayout() {
       name: "Đối Chiếu Ảnh Tổn Thương",
       path: "/doctor/lesions",
       icon: "icon-camera",
-    },
-  ];
-
-  const notifications = [
-    {
-      id: "d-n1",
-      title: "Bệnh nhân mới vào hàng đợi",
-      desc: "Trần Văn Nam (BA-2026-1043) vừa hoàn thành sàng lọc ban đầu.",
-      time: "5 phút trước",
-      unread: true,
-      icon: "icon-user-add",
-      link: "/doctor",
-    },
-    {
-      id: "d-n2",
-      title: "Cảnh báo chỉ số UAS7 tăng cao",
-      desc: "Bệnh nhân Nguyễn Thị Mai có điểm UAS hôm nay là 5/6 (Nặng).",
-      time: "1 giờ trước",
-      unread: true,
-      icon: "icon-chart-21",
-      link: "/doctor/prescriptions",
     },
   ];
 
@@ -203,45 +255,50 @@ export default function DoctorLayout() {
                 title="Thông báo lâm sàng"
               >
                 <span className="isax icon-notification text-lg"></span>
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                )}
               </button>
 
               {notifDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-[var(--base-border-opaque)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="p-3.5 border-b border-[var(--base-border-opaque)] flex items-center justify-between bg-gray-50/70">
                     <div className="text-xs font-bold text-gray-900 uppercase tracking-tight">Cảnh Báo Lâm Sàng</div>
-                    <span className="base-tag base-tag-negative text-[9px] font-mono font-bold">2 ca cần lưu ý</span>
+                    <span className="base-tag base-tag-negative text-[9px] font-mono font-bold">
+                      {unreadCount} ca cần lưu ý
+                    </span>
                   </div>
 
                   <div className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <Link
-                        key={n.id}
-                        to={n.link}
-                        onClick={() => setNotifDropdownOpen(false)}
-                        className={`p-3.5 flex items-start gap-3 hover:bg-gray-50 transition block ${
-                          n.unread ? "bg-amber-50/30" : ""
-                        }`}
-                      >
-                        <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className={`isax ${n.icon} text-base`}></span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-gray-900 leading-snug">{n.title}</p>
-                          <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{n.desc}</p>
-                          <span className="text-[10px] text-gray-400 mt-1 block font-mono">{n.time}</span>
-                        </div>
-                      </Link>
-                    ))}
+                    {notifications.length === 0 ? (
+                      <div className="p-5 text-center text-xs text-gray-400">Chưa có thông báo mới</div>
+                    ) : (
+                      notifications.map((n) => (
+                        <Link
+                          key={n.id}
+                          to={n.link}
+                          onClick={() => handleClickNotif(n)}
+                          className={`p-3.5 flex items-start gap-3 hover:bg-gray-50 transition block ${
+                            n.unread ? "bg-amber-50/30" : ""
+                          }`}
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className={`isax ${n.icon} text-base`}></span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-gray-900 leading-snug">{n.title}</p>
+                            <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{n.desc}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 block font-mono">{n.time}</span>
+                          </div>
+                        </Link>
+                      ))
+                    )}
                   </div>
 
                   <div className="p-2 border-t border-[var(--base-border-opaque)] bg-gray-50 text-center">
                     <button
-                      onClick={() => {
-                        toast.success("Đã ghi nhận toàn bộ thông báo lâm sàng");
-                        setNotifDropdownOpen(false);
-                      }}
-                      className="text-[11px] font-semibold text-[var(--base-brand-blue)] hover:underline"
+                      onClick={handleMarkAllRead}
+                      className="text-[11px] font-semibold text-[var(--base-brand-blue)] hover:underline cursor-pointer"
                     >
                       Đánh dấu đã xem
                     </button>
@@ -261,8 +318,10 @@ export default function DoctorLayout() {
                   BS
                 </div>
                 <div className="text-left text-xs leading-none hidden sm:block">
-                  <p className="font-bold text-gray-900">TS.BS. Nguyễn Văn Hùng</p>
-                  <span className="text-[10px] text-gray-400">Bác sĩ phụ trách</span>
+                  <p className="font-bold text-gray-900">{currentUser.full_name || "TS.BS. Nguyễn Văn Hùng"}</p>
+                  <span className="text-[10px] text-gray-400">
+                    {currentUser.role_name === "dieu_duong" ? "Điều dưỡng lâm sàng" : "Bác sĩ phụ trách"}
+                  </span>
                 </div>
                 <span
                   className={`isax icon-arrow-down-1 text-xs text-gray-400 transition-transform duration-200 ${
@@ -274,11 +333,15 @@ export default function DoctorLayout() {
               {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[var(--base-border-opaque)] p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="p-3 bg-gray-50 rounded-lg mb-1">
-                    <p className="text-xs font-bold text-gray-900 leading-snug">TS.BS. Nguyễn Văn Hùng</p>
+                    <p className="text-xs font-bold text-gray-900 leading-snug">
+                      {currentUser.full_name || "TS.BS. Nguyễn Văn Hùng"}
+                    </p>
                     <span className="base-role-badge base-role-badge-doctor text-[9px] mt-1 inline-block">
-                      Khoa Miễn Dịch Da Liễu
+                      {currentUser.specialty || "Khoa Miễn Dịch Da Liễu"}
                     </span>
-                    <p className="text-[11px] font-mono text-gray-500 mt-1">Mã NV: BS-102</p>
+                    <p className="text-[11px] font-mono text-gray-500 mt-1">
+                      Mã NV: {currentUser.employee_code || "BS-101"}
+                    </p>
                   </div>
 
                   <div className="space-y-0.5">

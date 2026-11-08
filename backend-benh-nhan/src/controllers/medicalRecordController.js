@@ -508,7 +508,8 @@ async function createMedicalRecord(req, res) {
     }
 
     // Kiểm tra template_id có tồn tại không (Test case 4101)
-    const templateDef = DEFAULT_TEMPLATES[templateId];
+    const templateDef =
+      (state.customTemplates && state.customTemplates[templateId]) || DEFAULT_TEMPLATES[templateId];
     if (!templateDef) {
       return sendResponse(res, RESPONSE_CODES.TEMPLATE_NOT_FOUND);
     }
@@ -528,8 +529,18 @@ async function createMedicalRecord(req, res) {
       return sendResponse(res, RESPONSE_CODES.USER_NOT_FOUND, {}, 'Patient record not found');
     }
 
-    const loaiBenhAn = templateDef.loai_benh_an; // 'CAP' hoặc 'MAN'
+    const loaiBenhAn =
+      templateDef.loai_benh_an ||
+      (templateId.toUpperCase().includes('ACUTE') || templateId.toUpperCase().includes('CAP')
+        ? 'CAP'
+        : 'MAN');
     const initialAnswers = Array.isArray(body.answers) ? body.answers : [];
+    const initialDiagnosis =
+      body.chan_doan_ban_dau_phong_kham ||
+      body.diagnosis ||
+      (loaiBenhAn === 'MAN'
+        ? 'Theo dõi Mày đay mạn tính (>= 6 tuần)'
+        : 'Theo dõi Mày đay cấp tính (< 6 tuần)');
 
     // Thực thi Transaction tạo đồng bộ `hosobenhan` và bảng subtype bắt buộc (`benhanmaydaycap` / `benhanmaydayman`)
     // để thỏa mãn khóa ngoại DEFERRABLE INITIALLY DEFERRED trong `final_restructured.sql`
@@ -540,11 +551,12 @@ async function createMedicalRecord(req, res) {
            loai_benh_an,
            thoi_diem_kham_lan_dau,
            ngay_bat_dau_dieu_tri_ngoai_tru,
+           chan_doan_ban_dau_phong_kham,
            trang_thai
          )
-         VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_DATE, 'pending')
+         VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_DATE, $3, 'pending')
          RETURNING ma_ho_so, ma_benh_nhan, loai_benh_an, thoi_diem_kham_lan_dau, trang_thai`,
-        [patientId, loaiBenhAn]
+        [patientId, loaiBenhAn, initialDiagnosis]
       );
 
       const hoso = hosoRes.rows[0];
@@ -740,8 +752,18 @@ async function getPatientMedicalHistory(req, res) {
     const listRes = await query(
       `SELECT hs.ma_ho_so, hs.ma_benh_nhan, hs.loai_benh_an, hs.thoi_diem_kham_lan_dau,
               hs.ngay_bat_dau_dieu_tri_ngoai_tru, hs.ngay_ket_thuc_dieu_tri_ngoai_tru,
-              hs.chan_doan_ban_dau_phong_kham, hs.trang_thai
+              hs.chan_doan_ban_dau_phong_kham, hs.trang_thai,
+              pk.ma_bac_si, pk.tom_tat_buoi_kham, pk.huong_xu_tri_lan_sau, pk.dan_do,
+              bs.ho_ten AS ten_bac_si
        FROM public.hosobenhan hs
+       LEFT JOIN LATERAL (
+         SELECT ma_phien_kham, ma_bac_si, tom_tat_buoi_kham, huong_xu_tri_lan_sau, dan_do
+         FROM public.phienkham
+         WHERE ma_ho_so = hs.ma_ho_so
+         ORDER BY lan_kham_thu DESC
+         LIMIT 1
+       ) pk ON TRUE
+       LEFT JOIN public.nguoi bs ON bs.ma_nguoi = pk.ma_bac_si
        WHERE hs.ma_benh_nhan = $1
        ORDER BY hs.thoi_diem_kham_lan_dau DESC NULLS LAST, hs.ma_ho_so DESC`,
       [targetPatientId]
@@ -752,13 +774,19 @@ async function getPatientMedicalHistory(req, res) {
       const meta = state.recordMeta[maHoSo] || {};
       return {
         medical_record_id: maHoSo,
+        record_code: `BA-2026-${String(maHoSo).padStart(4, '0')}`,
         patient_id: Number(row.ma_benh_nhan),
-        assigned_doctor_id: meta.assigned_doctor_id || null,
+        assigned_doctor_id: meta.assigned_doctor_id || (row.ma_bac_si ? Number(row.ma_bac_si) : null),
+        assigned_doctor_name: row.ten_bac_si || null,
         template_id:
           meta.template_id || (row.loai_benh_an === 'MAN' ? 'TMPL_URT_CHRONIC' : 'TMPL_URT_ACUTE'),
         loai_benh_an: row.loai_benh_an,
+        clinical_type: row.loai_benh_an === 'MAN' ? 'chronic' : 'acute',
+        diagnosis: row.chan_doan_ban_dau_phong_kham || row.tom_tat_buoi_kham || null,
+        visit_summary: row.tom_tat_buoi_kham || null,
+        visit_plan: row.huong_xu_tri_lan_sau || null,
         status: row.trang_thai,
-        instructions: meta.instructions || null,
+        instructions: meta.instructions || row.dan_do || null,
         created_at:
           meta.created_at ||
           (row.thoi_diem_kham_lan_dau
@@ -863,7 +891,8 @@ async function updateMedicalRecordAnswers(req, res) {
 async function getTemplateDetail(req, res) {
   try {
     const templateId = String(req.params.id || '').trim();
-    const tmpl = DEFAULT_TEMPLATES[templateId];
+    const tmpl =
+      (state.customTemplates && state.customTemplates[templateId]) || DEFAULT_TEMPLATES[templateId];
     if (!tmpl) {
       return sendResponse(res, RESPONSE_CODES.TEMPLATE_NOT_FOUND);
     }

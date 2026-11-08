@@ -38,9 +38,15 @@ async function initDatabase() {
     process.env.SQL_SCHEMA_PATH || '../mayday-database/final_restructured.sql'
   );
   if (!fs.existsSync(sqlSchemaPath)) {
-    const docsSchema = path.resolve(__dirname, '../../docs/final_restructured.sql');
-    if (fs.existsSync(docsSchema)) {
-      sqlSchemaPath = docsSchema;
+    const candidatePaths = [
+      path.resolve(__dirname, '../../../docs/final_restructured.sql'),
+      path.resolve(__dirname, '../../docs/final_restructured.sql')
+    ];
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        sqlSchemaPath = candidate;
+        break;
+      }
     }
   }
 
@@ -76,6 +82,10 @@ async function initDatabase() {
     ? path.resolve(__dirname, '../../', process.env.PGLITE_DATA_DIR)
     : undefined; // In-memory PostgreSQL 16 engine (nhanh, sạch, nạp trực tiếp final_restructured.sql)
 
+  if (dataDir && !fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
   pgliteInstance = new PGlite(dataDir);
   await pgliteInstance.waitReady;
   activeMode = 'pglite';
@@ -96,6 +106,11 @@ async function initDatabase() {
   await seedBaseCatalogIfEmpty();
 
   isInitialized = true;
+
+  if (String(process.env.SEED_DEMO_DATA || 'false').toLowerCase() === 'true') {
+    const { seedDemoDataIfNeeded } = require('./demoSeeder');
+    await seedDemoDataIfNeeded({ rawQuery, withTransaction });
+  }
 }
 
 /**
@@ -228,8 +243,22 @@ async function withTransaction(callback) {
   });
 }
 
+async function closeDatabase() {
+  if (pgPool) {
+    await pgPool.end();
+    pgPool = null;
+  }
+  if (pgliteInstance && typeof pgliteInstance.close === 'function') {
+    await pgliteInstance.close();
+    pgliteInstance = null;
+  }
+  isInitialized = false;
+  activeMode = null;
+}
+
 module.exports = {
   initDatabase,
   query,
-  withTransaction
+  withTransaction,
+  closeDatabase
 };

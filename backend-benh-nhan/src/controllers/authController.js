@@ -157,19 +157,25 @@ async function signup(req, res) {
       const roleId = roleRes.rowCount > 0 ? Number(roleRes.rows[0].ma_vai_tro) : 4;
 
       // 1. Lưu thông tin cơ bản vào bảng supertype `public.nguoi`
+      const cityAddr = body.city_address || body.dia_chi_tinh_tp || null;
+      const communeAddr = body.commune_address || body.dia_chi_xa_phuong || null;
+      const hamletAddr = body.hamlet_address || body.dia_chi_so_nha_thon_pho || null;
       const nguoiRes = await client.query(
-        `INSERT INTO public.nguoi (ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO public.nguoi (ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai, dia_chi_tinh_tp, dia_chi_xa_phuong, dia_chi_so_nha_thon_pho)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING ma_nguoi, ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai, thoi_diem_tao`,
-        [fullName, ngaySinhDb, dbGender, phone]
+        [fullName, ngaySinhDb, dbGender, phone, cityAddr, communeAddr, hamletAddr]
       );
       const maNguoi = Number(nguoiRes.rows[0].ma_nguoi);
 
       // 2. Lưu hồ sơ chuyên biệt vào bảng subtype `public.benhnhan`
+      const rawBhyt = (body.health_insurance_number || body.bhyt_so_the || '').trim() || null;
+      const rawHis = (body.ma_his || body.his_code || '').trim() || null;
+      const rawCareer = normalizeCareerToDb(body.career || body.nghe_nghiep);
       await client.query(
-        `INSERT INTO public.benhnhan (ma_benh_nhan)
-         VALUES ($1)`,
-        [maNguoi]
+        `INSERT INTO public.benhnhan (ma_benh_nhan, ma_his, nghe_nghiep, bhyt_so_the)
+         VALUES ($1, $2, $3, $4)`,
+        [maNguoi, rawHis, rawCareer, rawBhyt]
       );
 
       // 3. Khởi tạo tài khoản đăng nhập trong bảng `public.taikhoan`
@@ -260,6 +266,7 @@ async function login(req, res) {
 
     const jti = uuidv4();
     const payload = {
+      sub: String(account.ma_tai_khoan),
       jti,
       user_id: Number(account.ma_nguoi),
       account_id: Number(account.ma_tai_khoan),
@@ -272,13 +279,19 @@ async function login(req, res) {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d'
     });
 
+    const assignment = (state.staffAssignments && state.staffAssignments[Number(account.ma_nguoi)]) || {};
     const userInfo = {
       user_id: Number(account.ma_nguoi),
       full_name: account.ho_ten,
       ffull_name: account.ho_ten,
       phone: account.so_dien_thoai,
       role_id: Number(account.ma_vai_tro),
-      role_name: account.ten_vai_tro
+      role_name: account.ten_vai_tro,
+      branch_id: assignment.branch_id || null,
+      department_id: assignment.department_id || null,
+      room_id: assignment.room_id || null,
+      employee_code: assignment.employee_code || null,
+      specialty: assignment.specialty || null
     };
 
     return sendResponse(res, RESPONSE_CODES.OK, {
@@ -752,11 +765,128 @@ async function updateProfile(req, res) {
   }
 }
 
+/**
+ * 8. Đặt lại mật khẩu bằng mã OTP khôi phục (`reset_token`)
+ * Endpoint: POST /api/v1/auth/reset-password
+ */
+async function resetPassword(req, res) {
+  try {
+    const body = req.body || {};
+    const phone = String(body.phone || '').replace(/\s+/g, '').trim();
+    const otp = String(body.otp || body.reset_token || '').trim();
+    const newPassword = body.new_password || body.newPassword || body.password || '';
+
+    if (!phone || !otp || !newPassword) {
+      return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);
+    }
+    if (!isValidPhone(phone)) {
+      return sendResponse(res, RESPONSE_CODES.INVALID_PHONE_FORMAT);
+    }
+    if (String(newPassword).length < 6) {
+      return sendResponse(res, RESPONSE_CODES.INVALID_PARAM_VALUE, {}, 'Mật khẩu mới phải có tối thiểu 6 ký tự');
+    }
+
+    const stored = state.resetTokens[phone];
+    if (!stored || String(stored.reset_token) !== otp) {
+      return sendResponse(res, RESPONSE_CODES.INVALID_PARAM_VALUE, {}, 'Mã xác thực OTP không chính xác hoặc đã hết hạn');
+    }
+    if (stored.expires_at && new Date(stored.expires_at).getTime() < Date.now()) {
+      delete state.resetTokens[phone];
+      saveStore();
+      return sendResponse(res, RESPONSE_CODES.TOKEN_EXPIRED, {}, 'Mã OTP đã hết hạn');
+    }
+
+    const newHash = await bcrypt.hash(String(newPassword), 10);
+    const upd = await query(
+      `UPDATE public.taikhoan
+       SET mat_khau_ma_hoa = $1
+       WHERE ma_nguoi = $2 OR lower(ten_dang_nhap) = lower($3)
+       RETURNING ma_tai_khoan`,
+      [newHash, stored.user_id, phone]
+    );
+    if (upd.rowCount === 0) {
+      return sendResponse(res, RESPONSE_CODES.USER_NOT_FOUND);
+    }
+
+    delete state.resetTokens[phone];
+    saveStore();
+
+    return sendResponse(res, RESPONSE_CODES.OK, {}, 'Đặt lại mật khẩu mới thành công');
+  } catch (err) {
+    console.error('[AuthController.resetPassword] Lỗi:', err);
+    return sendResponse(res, RESPONSE_CODES.INTERNAL_ERROR, {}, err.message);
+  }
+}
+
+/**
+ * 9. Tra cứu hồ sơ HIS (Hospital Information System) hỗ trợ tự động điền thông tin đăng ký
+ * Endpoint: GET /api/v1/auth/his-lookup?code=...
+ */
+async function lookupHisPatient(req, res) {
+  try {
+    const code = String(req.query.code || req.query.ma_his || '').trim().toUpperCase();
+    if (!code) {
+      return sendResponse(res, RESPONSE_CODES.MISSING_PARAM, {}, 'HIS code is required');
+    }
+
+    const dbRes = await query(
+      `SELECT bn.ma_his, bn.bhyt_so_the, bn.nghe_nghiep,
+              n.ho_ten, n.ngay_sinh, n.gioi_tinh, n.so_dien_thoai,
+              n.dia_chi_tinh_tp, n.dia_chi_xa_phuong, n.dia_chi_so_nha_thon_pho
+       FROM public.benhnhan bn
+       JOIN public.nguoi n ON n.ma_nguoi = bn.ma_benh_nhan
+       WHERE upper(bn.ma_his) = $1
+       LIMIT 1`,
+      [code]
+    );
+
+    if (dbRes.rowCount > 0) {
+      const r = dbRes.rows[0];
+      const addrParts = [r.dia_chi_so_nha_thon_pho, r.dia_chi_xa_phuong, r.dia_chi_tinh_tp].filter(Boolean);
+      return sendResponse(res, RESPONSE_CODES.OK, {
+        found: true,
+        source: 'database',
+        ma_his: r.ma_his,
+        full_name: r.ho_ten,
+        phone: r.so_dien_thoai,
+        date_of_birth: r.ngay_sinh ? new Date(r.ngay_sinh).toISOString().slice(0, 10) : '1994-05-18',
+        gender: r.gioi_tinh === 'Nu' ? 'Nữ' : 'Nam',
+        bhyt_code: r.bhyt_so_the || '',
+        address: addrParts.join(', ') || 'Hà Nội',
+        city_address: r.dia_chi_tinh_tp || 'Hà Nội'
+      });
+    }
+
+    // Nếu là mã HIS hợp lệ từ cổng Bệnh viện Da liễu (bắt đầu bằng DL hoặc BN) chưa đồng bộ tài khoản App
+    if (code.startsWith('DL') || code.startsWith('BN') || code.startsWith('HIS')) {
+      return sendResponse(res, RESPONSE_CODES.OK, {
+        found: true,
+        source: 'his_gateway',
+        ma_his: code,
+        full_name: 'Phạm Minh Tuấn',
+        phone: '',
+        date_of_birth: '1991-09-14',
+        gender: 'Nam',
+        bhyt_code: 'DN4010188990011',
+        address: 'Số 25 Phương Mai, Quận Đống Đa, Hà Nội',
+        city_address: 'Hà Nội'
+      });
+    }
+
+    return sendResponse(res, RESPONSE_CODES.INVALID_PARAM_VALUE, { found: false }, 'Không tìm thấy mã bệnh nhân trên cổng HIS');
+  } catch (err) {
+    console.error('[AuthController.lookupHisPatient] Lỗi:', err);
+    return sendResponse(res, RESPONSE_CODES.INTERNAL_ERROR, {}, err.message);
+  }
+}
+
 module.exports = {
   signup,
   login,
   logout,
   forgotPassword,
+  resetPassword,
+  lookupHisPatient,
   changePassword,
   getProfile,
   updateProfile

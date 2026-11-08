@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import apiClient from "../../services/apiClient";
+
+function makeSessionUuid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  const hex = Date.now().toString(16).padStart(12, "0").slice(-12);
+  return `00000000-0000-4000-8000-${hex}`;
+}
 
 export default function EmergencyTriage() {
+  const [sessionUuid, setSessionUuid] = useState(() => makeSessionUuid());
   const [answers, setAnswers] = useState({
     airway: null,
     breathing: null,
@@ -38,6 +48,19 @@ export default function EmergencyTriage() {
     },
   ];
 
+  const logScreeningToServer = (updatedAnswers, extra = {}) => {
+    apiClient
+      .post("/red-flag-screening", {
+        ma_phien_ung_dung: sessionUuid,
+        co_sung_moi_luoi_co_hong: Boolean(updatedAnswers.airway),
+        co_kho_tho_kho_khe_nghen_hong: Boolean(updatedAnswers.breathing),
+        co_chong_mat_tuc_nguc_sap_ngat: Boolean(updatedAnswers.circulation),
+        co_dau_bung_non_lien_tuc: Boolean(updatedAnswers.gastrointestinal),
+        ...extra,
+      })
+      .catch(() => {});
+  };
+
   const handleSelect = (id, val) => {
     const updated = { ...answers, [id]: val };
     setAnswers(updated);
@@ -45,11 +68,13 @@ export default function EmergencyTriage() {
     // If any answer is yes, trigger red alert immediately (< 30s)
     if (val === true) {
       setTriageDone(true);
+      logScreeningToServer(updated, { xac_nhan_muon_goi_cap_cuu: true });
     } else {
       // If all answered no
       const allAnswered = Object.values(updated).every((v) => v !== null);
       if (allAnswered) {
         setTriageDone(true);
+        logScreeningToServer(updated);
       }
     }
   };
@@ -58,6 +83,7 @@ export default function EmergencyTriage() {
   const allAnswered = Object.values(answers).every((v) => v !== null);
 
   const handleReset = () => {
+    setSessionUuid(makeSessionUuid());
     setAnswers({
       airway: null,
       breathing: null,
@@ -132,6 +158,13 @@ export default function EmergencyTriage() {
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <a
                   href="tel:115"
+                  onClick={() =>
+                    logScreeningToServer(answers, {
+                      xac_nhan_muon_goi_cap_cuu: true,
+                      da_nhan_nut_goi_cap_cuu: true,
+                      so_dien_thoai_cap_cuu: "115",
+                    })
+                  }
                   className="base-btn base-btn-danger w-full sm:w-auto px-8 py-3.5 text-base font-extrabold justify-center shadow-lg hover:shadow-xl text-center"
                 >
                   <span className="isax-b icon-call text-xl"></span>

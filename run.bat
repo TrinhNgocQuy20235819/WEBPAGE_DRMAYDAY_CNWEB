@@ -2,28 +2,17 @@
 setlocal
 
 set "PROJECT_ROOT=%~dp0"
-
-echo ========================================
-echo   DrMayDay - khoi dong toan bo project
-echo ========================================
-
-where java >nul 2>nul
-if errorlevel 1 (
-    echo [LOI] Chua tim thay Java. Cai Java 17 hoac moi hon va them vao PATH.
-    pause
-    exit /b 1
+if exist "C:\Program Files\nodejs\node.exe" (
+    set "PATH=C:\Program Files\nodejs;%PATH%"
 )
+
+echo =========================================================
+echo   DrMayDay Complete - Khoi dong He Thong Hop Nhat (v2.0)
+echo =========================================================
 
 where node >nul 2>nul
 if errorlevel 1 (
-    echo [LOI] Chua tim thay Node.js. Cai Node.js va them vao PATH.
-    pause
-    exit /b 1
-)
-
-where npm >nul 2>nul
-if errorlevel 1 (
-    echo [LOI] Chua tim thay npm. Cai Node.js kem npm va them vao PATH.
+    echo [LOI] Chua tim thay Node.js. Vui long cai Node.js 18+ va thu lai.
     pause
     exit /b 1
 )
@@ -36,17 +25,18 @@ if not exist "%PROJECT_ROOT%mayday-database\final_restructured.sql" (
     )
 )
 
-if not exist "%PROJECT_ROOT%backend\mvnw.cmd" (
-    echo [LOI] Khong tim thay backend\mvnw.cmd.
-    pause
-    exit /b 1
-)
-
 echo.
-echo Kiem tra va cai dependencies neu chua co...
+echo [1/3] Kiem tra thu vien cai dat (node_modules)...
 
 if not exist "%PROJECT_ROOT%backend-benh-nhan\node_modules" (
     pushd "%PROJECT_ROOT%backend-benh-nhan"
+    call npm install
+    if errorlevel 1 goto install_failed
+    popd
+)
+
+if not exist "%PROJECT_ROOT%backend-bac-si\node_modules" (
+    pushd "%PROJECT_ROOT%backend-bac-si"
     call npm install
     if errorlevel 1 goto install_failed
     popd
@@ -59,38 +49,24 @@ if not exist "%PROJECT_ROOT%frontend\node_modules" (
     popd
 )
 
-if exist "%PROJECT_ROOT%backend-bac-si\.env" (
-    if not exist "%PROJECT_ROOT%backend-bac-si\node_modules" (
-        pushd "%PROJECT_ROOT%backend-bac-si"
-        call npm install
-        if errorlevel 1 goto install_failed
-        popd
-    )
-)
+echo.
+echo [2/3] Khoi dong Unified API Gateway + Embedded PostgreSQL (Port 3080)...
+start "DrMayDay Unified Backend - Port 3080" /D "%PROJECT_ROOT%" cmd /k "set PATH=C:\Program Files\nodejs;%PATH% && node server.js"
+
+echo [3/3] Khoi dong Giao dien Web React + Vite (Port 5173)...
+start "DrMayDay Frontend Web - Port 5173" /D "%PROJECT_ROOT%frontend" cmd /k "set PATH=C:\Program Files\nodejs;%PATH% && npm run dev"
 
 echo.
-echo Dang mo cac dich vu trong cac cua so rieng...
-start "DrMayDay Backend Benh Nhan - port 3000" /D "%PROJECT_ROOT%backend-benh-nhan" cmd /k "npm start"
-start "DrMayDay Backend Spring - port 8080" /D "%PROJECT_ROOT%backend" cmd /k "mvnw.cmd spring-boot:run"
-start "DrMayDay Frontend - port 5173" /D "%PROJECT_ROOT%frontend" cmd /k "npm run dev -- --host 0.0.0.0"
-if exist "%PROJECT_ROOT%backend-bac-si\.env" (
-    start "DrMayDay Backend Bac Si - port 3001" /D "%PROJECT_ROOT%backend-bac-si" cmd /k "npm start"
-) else (
-    echo Backend bac si chua duoc khoi dong.
-    echo Tao backend-bac-si\.env tu backend-bac-si\.env.example va cau hinh DATABASE_URL dung chung PostgreSQL.
-)
-
-echo.
-echo Da gui lenh khoi dong cac dich vu da cau hinh:
-echo   Frontend:             http://localhost:5173
-echo   Backend Spring:       http://localhost:8080
-echo   Backend benh nhan:    http://localhost:3000/api/v1/health
-echo   Backend bac si:       http://localhost:3001/api/v1/health (can .env)
-echo.
-echo Backend benh nhan mac dinh dung PostgreSQL nhung PGlite.
-echo De dung chung database, cau hinh backend-benh-nhan va backend-bac-si cung DATABASE_URL PostgreSQL;
-echo dat USE_EMBEDDED_PG=false o backend-benh-nhan va JWT_SECRET hai backend phai giong nhau.
-echo Cua so nay co the dong; cac cua so dich vu se tiep tuc chay.
+echo =========================================================
+echo   HE THONG DRMAYDAY DA KHOI DONG THANH CONG!
+echo   - Giao dien Web:   http://localhost:5173
+echo   - Unified API:     http://localhost:3080/api/v1/health
+echo =========================================================
+echo   Tai khoan Demo (Mat khau chung: password123):
+echo   - Admin:     0903000999
+echo   - Bac si:    0988765432
+echo   - Benh nhan: 0912345678
+echo =========================================================
 pause
 exit /b 0
 

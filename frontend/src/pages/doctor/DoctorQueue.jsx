@@ -1,12 +1,30 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { INITIAL_RECORDS } from "../../services/mockData";
+import apiClient from "../../services/apiClient";
 import Pagination from "../../components/common/Pagination";
+
+function mapQueueRow(r) {
+  return {
+    id: String(r.medical_record_id || r.patient_id),
+    medical_record_id: r.medical_record_id ? String(r.medical_record_id) : null,
+    record_code: r.record_code || `BN-${r.patient_id}`,
+    patient_id: String(r.patient_id),
+    patient_name: r.patient_name || "Bệnh nhân",
+    patient_phone: r.phone || "",
+    clinical_type: r.clinical_type || "acute",
+    room_name: r.room_name || "Phòng Khám Tiếp Đón",
+    assigned_doctor_name: r.assigned_doctor_name || "Chưa phân công",
+    status: r.status || "pending",
+    uas7_total: r.uas7_total,
+  };
+}
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
-  const [records, setRecords] = useState(INITIAL_RECORDS);
+  const [records, setRecords] = useState([]);
+  const [searchResults, setSearchResults] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // 'all', 'pending', 'in_progress', 'completed'
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +38,45 @@ export default function DoctorQueue() {
     clinical_type: "chronic",
   });
 
+  const loadQueue = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get("/doctor/queue", {
+        params: { status: "all", include_completed: "true" },
+      });
+      const raw = Array.isArray(res.data) ? res.data : [];
+      setRecords(raw.map(mapQueueRow));
+    } catch {
+      // Handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadQueue();
+  }, [loadQueue]);
+
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      apiClient
+        .get("/doctor/patients/search", { params: { q } })
+        .then((res) => {
+          const rows = Array.isArray(res.data) ? res.data : [];
+          setSearchResults(rows.filter((x) => x.medical_record_id).map(mapQueueRow));
+        })
+        .catch(() => {
+          setSearchResults(null);
+        });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
     setCurrentPage(1);
@@ -30,70 +87,76 @@ export default function DoctorQueue() {
     setCurrentPage(1);
   };
 
-  const filtered = records.filter((r) => {
+  const baseSource = searchResults !== null ? searchResults : records;
+  const filtered = baseSource.filter((r) => {
     const matchFilter = filter === "all" ? true : r.status === filter;
+    if (searchResults !== null) return matchFilter;
+    const q = search.toLowerCase();
     const matchSearch =
-      r.patient_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.record_code.toLowerCase().includes(search.toLowerCase()) ||
-      r.patient_phone.includes(search);
+      !q ||
+      r.patient_name.toLowerCase().includes(q) ||
+      r.record_code.toLowerCase().includes(q) ||
+      r.patient_phone.includes(q);
     return matchFilter && matchSearch;
   });
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginatedRecords = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const handleAssignToMe = (id) => {
-    setRecords(
-      records.map((r) =>
-        r.id === id
-          ? { ...r, status: "in_progress", assigned_doctor_name: "TS.BS. Nguyễn Văn Hùng" }
-          : r
-      )
-    );
-    toast.success("Bác sĩ đã tiếp nhận ca khám!");
+  const handleAssignToMe = async (record) => {
+    if (!record.medical_record_id) return;
+    try {
+      await apiClient.post(`/doctor/medical-records/${record.medical_record_id}/accept`, {});
+      sessionStorage.setItem("activeDoctorRecordId", String(record.medical_record_id));
+      toast.success(`Đã tiếp nhận ca khám ${record.record_code}!`);
+      navigate("/doctor/prescriptions");
+    } catch {
+      // Handled by interceptor
+    }
+  };
+
+  const handleOpenDetail = (record) => {
+    if (record.medical_record_id) {
+      sessionStorage.setItem("activeDoctorRecordId", String(record.medical_record_id));
+    }
     navigate("/doctor/prescriptions");
   };
 
-  const handleCreatePatient = (e) => {
+  const handleCreatePatient = async (e) => {
     e.preventDefault();
-    if (!newPatient.name || !newPatient.phone) {
-      toast.error("Vui lòng nhập họ tên và số điện thoại!");
+    const cleanPhone = newPatient.phone.replace(/\s+/g, "").trim();
+    if (!newPatient.name.trim() || !cleanPhone) {
+      toast.error("Vui lòng nhập họ tên và số điện thoại 10 chữ số!");
       return;
     }
-    const created = {
-      id: `rec-${Date.now()}`,
-      medical_record_id: Math.floor(1000 + Math.random() * 9000),
-      record_code: `BA-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      patient_name: newPatient.name,
-      patient_phone: newPatient.phone,
-      patient_gender: newPatient.gender,
-      patient_age: Number(newPatient.age),
-      bhyt_code: "DN4010" + Math.floor(100000000 + Math.random() * 900000000),
-      status: "pending",
-      clinical_type: newPatient.clinical_type,
-      assigned_doctor_name: "Chưa phân công",
-      room_name: "Phòng 301 - Tiếp đón",
-      uas7_today: null,
-      created_at: new Date().toISOString(),
-      diagnosis: newPatient.clinical_type === "chronic" ? "Mày đay mạn tính" : "Mày đay cấp tính",
-      symptoms: "Bệnh nhân mới tiếp nhận.",
-      prescriptions: [],
-    };
-    setRecords([created, ...records]);
-    setShowAddModal(false);
-    toast.success(`Đã tiếp nhận bệnh nhân: ${created.record_code}`);
+    const birthYear = Math.max(1920, new Date().getFullYear() - (Number(newPatient.age) || 30));
+    try {
+      const res = await apiClient.post("/doctor/patients", {
+        full_name: newPatient.name.trim(),
+        phone: cleanPhone,
+        gender: newPatient.gender,
+        date_of_birth: `${birthYear}-01-01`,
+        clinical_type: newPatient.clinical_type,
+      });
+      setShowAddModal(false);
+      setNewPatient({ name: "", phone: "", gender: "female", age: 30, clinical_type: "chronic" });
+      toast.success(`Đã tiếp nhận bệnh nhân: ${res.data?.record_code || ""}`);
+      await loadQueue();
+    } catch {
+      // Handled by interceptor
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner (Tràn viền, súc tích) */}
+      {/* Hero Banner */}
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
             <h1 className="base-hero-title">Hàng Đợi Khám Bệnh</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-clock text-sm"></span>
-              <span>Tiếp nhận và điều phối bệnh nhân trong ngày</span>
+              <span>Tiếp nhận và điều phối bệnh nhân thời gian thực</span>
             </p>
           </div>
           <div className="base-hero-actions">
@@ -103,7 +166,7 @@ export default function DoctorQueue() {
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Tìm tên, SĐT, mã BA..."
+                placeholder="Tìm tên, SĐT, HIS, BHYT..."
                 className="pl-8 pr-3 py-1.5 rounded-lg text-xs bg-white/15 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40 w-48 sm:w-56"
               />
             </div>
@@ -118,7 +181,7 @@ export default function DoctorQueue() {
         </div>
       </div>
 
-      {/* Primary Line Tabs (Style chuẩn Image 2) */}
+      {/* Primary Line Tabs */}
       <div className="base-tab-nav">
         <button
           onClick={() => handleFilterChange("all")}
@@ -150,7 +213,7 @@ export default function DoctorQueue() {
         </button>
       </div>
 
-      {/* Bảng danh sách hàng đợi (Wording tinh gọn) */}
+      {/* Bảng danh sách hàng đợi */}
       <div className="base-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="base-table">
@@ -166,7 +229,13 @@ export default function DoctorQueue() {
               </tr>
             </thead>
             <tbody>
-              {paginatedRecords.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-gray-400 text-xs">
+                    Đang đồng bộ hàng đợi khám bệnh từ máy chủ...
+                  </td>
+                </tr>
+              ) : paginatedRecords.length > 0 ? (
                 paginatedRecords.map((r) => (
                   <tr key={r.id}>
                     <td className="font-mono font-bold text-xs text-[var(--base-brand-navy)]">
@@ -207,20 +276,20 @@ export default function DoctorQueue() {
                     <td className="text-right">
                       {r.status === "pending" ? (
                         <button
-                          onClick={() => handleAssignToMe(r.id)}
+                          onClick={() => handleAssignToMe(r)}
                           className="base-btn base-btn-primary base-btn-compact text-xs cursor-pointer"
                         >
                           <span className="isax icon-user-tick text-xs"></span>
                           <span>Khám</span>
                         </button>
                       ) : (
-                        <Link
-                          to="/doctor/prescriptions"
-                          className="base-btn base-btn-secondary base-btn-compact text-xs"
+                        <button
+                          onClick={() => handleOpenDetail(r)}
+                          className="base-btn base-btn-secondary base-btn-compact text-xs cursor-pointer"
                         >
                           <span className="isax icon-health text-xs"></span>
                           <span>Chi tiết</span>
-                        </Link>
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -237,7 +306,6 @@ export default function DoctorQueue() {
           </table>
         </div>
 
-        {/* Reusable Standard Pagination */}
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -257,7 +325,7 @@ export default function DoctorQueue() {
         <div className="base-modal-backdrop">
           <div className="base-modal-dialog max-w-md w-full">
             <div className="base-modal-header">
-              <h3 className="base-modal-title">Tiếp Nhận Bệnh Nhân</h3>
+              <h3 className="base-modal-title">Tiếp Nhận Bệnh Nhân Tại Quầy</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
@@ -278,12 +346,12 @@ export default function DoctorQueue() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Số điện thoại *</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Số điện thoại (10 số) *</label>
                   <input
                     type="tel"
                     value={newPatient.phone}
                     onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                    placeholder="VD: 0987 654 321"
+                    placeholder="VD: 0987654321"
                     className="base-input text-xs font-mono"
                     required
                   />
@@ -313,14 +381,14 @@ export default function DoctorQueue() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Thể bệnh</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Thể bệnh dự kiến</label>
                   <select
                     value={newPatient.clinical_type}
                     onChange={(e) => setNewPatient({ ...newPatient, clinical_type: e.target.value })}
                     className="base-input text-xs"
                   >
-                    <option value="chronic">Mạn tính</option>
-                    <option value="acute">Cấp tính</option>
+                    <option value="chronic">Mạn tính (≥ 6 tuần)</option>
+                    <option value="acute">Cấp tính (&lt; 6 tuần)</option>
                   </select>
                 </div>
               </div>
@@ -334,7 +402,7 @@ export default function DoctorQueue() {
                   Hủy
                 </button>
                 <button type="submit" className="base-btn base-btn-primary base-btn-compact font-bold">
-                  Tiếp nhận
+                  Tiếp nhận vào hàng đợi
                 </button>
               </div>
             </form>

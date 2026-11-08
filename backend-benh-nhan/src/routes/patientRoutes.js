@@ -60,7 +60,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const { authenticateJWT } = require('../middlewares/authMiddleware');
+const { authenticateJWT, optionalAuthenticateJWT } = require('../middlewares/authMiddleware');
 const authController = require('../controllers/authController');
 const medicalRecordController = require('../controllers/medicalRecordController');
 const uas7Controller = require('../controllers/uas7Controller');
@@ -105,6 +105,8 @@ router.post('/auth/register', authController.signup);
 router.post('/auth/login', authController.login);
 router.post('/auth/logout', authenticateJWT, authController.logout);
 router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/reset-password', authController.resetPassword);
+router.get('/auth/his-lookup', authController.lookupHisPatient);
 router.put('/auth/change-password', authenticateJWT, authController.changePassword);
 router.post('/auth/change-password', authenticateJWT, authController.changePassword);
 
@@ -116,10 +118,10 @@ router.put('/users/profile', authenticateJWT, authController.updateProfile);
 // ============================================================================
 // 2. ROUTES SÀNG LỌC BÁO ĐỘNG ĐỎ, PHÂN LOẠI & BỆNH ÁN MÀY ĐAY (SLIDE 5, 7, 10, 11)
 // ============================================================================
-router.post('/red-flag-screening', authenticateJWT, medicalRecordController.createRedFlagScreening);
+router.post('/red-flag-screening', optionalAuthenticateJWT, medicalRecordController.createRedFlagScreening);
 router.post(
   '/medical-records/screening/red-flags',
-  authenticateJWT,
+  optionalAuthenticateJWT,
   medicalRecordController.createRedFlagScreening
 );
 

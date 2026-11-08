@@ -1207,7 +1207,11 @@ async function uploadImageAttachment(req, res) {
 
     const originalName = file ? file.originalname : String(body.file_name);
     const storagePath = file ? `/uploads/${file.filename}` : body.storage_path || `/uploads/${Date.now()}_${originalName}`;
-    const fileUrl = body.file_url || `http://localhost:${process.env.PORT || 3000}${storagePath}`;
+    const dynamicOrigin =
+      req && typeof req.get === 'function' && req.get('host')
+        ? `${req.protocol || 'http'}://${req.get('host')}`
+        : `http://localhost:${process.env.PORT || 8080}`;
+    const fileUrl = body.file_url || `${dynamicOrigin}${storagePath}`;
     const mimeType = file ? file.mimetype : body.mime_type || 'image/jpeg';
 
     const insertRes = await query(

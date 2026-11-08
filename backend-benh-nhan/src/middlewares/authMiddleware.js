@@ -121,8 +121,22 @@ function requireRoles(...allowedRoles) {
   };
 }
 
+/**
+ * Middleware xác thực tùy chọn (Optional JWT):
+ * Nếu client gửi kèm Bearer Token hợp lệ thì nạp `req.user`, nếu không có header Authorization thì cho qua.
+ * Phục vụ API Sàng lọc báo động đỏ (`POST /red-flag-screening`) cho cả khách vãng lai & bệnh nhân đã đăng nhập.
+ */
+async function optionalAuthenticateJWT(req, res, next) {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ') || !authHeader.slice(7).trim()) {
+    return next();
+  }
+  return authenticateJWT(req, res, next);
+}
+
 module.exports = {
   authenticateJWT,
+  optionalAuthenticateJWT,
   requireRoles,
   JWT_SECRET
 };

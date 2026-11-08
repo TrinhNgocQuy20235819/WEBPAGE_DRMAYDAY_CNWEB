@@ -17,6 +17,7 @@ const formBuilderController = require('../controllers/formBuilderController');
 // ============================================================================
 // 1. SLIDE 3: QUẢN TRỊ NGƯỜI DÙNG & PHÂN CÔNG CÔNG TÁC (ADMIN MODULE)
 // ============================================================================
+router.get('/admin/dashboard', authenticateJWT, requireRoles('admin'), adminController.getDashboardSummary);
 router.get('/admin/users', authenticateJWT, requireRoles('admin'), adminController.getListUsers);
 router.get('/admin/users/:id', authenticateJWT, requireRoles('admin'), adminController.getUserDetails);
 router.post('/admin/users', authenticateJWT, requireRoles('admin'), adminController.createUser);
