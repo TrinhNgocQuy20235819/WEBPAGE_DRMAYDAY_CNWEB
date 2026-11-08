@@ -665,3 +665,4 @@ async function seedDemoDataIfNeeded({ rawQuery, withTransaction }) {
 }
 
 module.exports = { seedDemoDataIfNeeded };
+

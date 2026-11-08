@@ -29,3 +29,4 @@ router.get('/doctor/ping', authenticateJWT, requireRoles('bac_si', 'dieu_duong',
 router.get('/patient/ping', authenticateJWT, requireRoles('benh_nhan'), sharedInfraController.securityPing('patient'));
 
 module.exports = router;
+
