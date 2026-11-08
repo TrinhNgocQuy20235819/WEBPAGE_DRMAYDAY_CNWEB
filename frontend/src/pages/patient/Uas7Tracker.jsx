@@ -51,24 +51,22 @@ export default function Uas7Tracker() {
         </div>
       </div>
 
-      {/* Module Grouped Sub-navigation */}
-      <div className="flex items-center gap-2 border-b border-[var(--base-border-opaque)] pb-3">
-        <div className="flex items-center gap-2">
-          <Link
-            to="/patient/uas7"
-            className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[var(--base-brand-navy)] text-white shadow-2xs flex items-center gap-1.5"
-          >
-            <span className="isax-b icon-chart-21 text-sm"></span>
-            <span>Chấm điểm UAS7</span>
-          </Link>
-          <Link
-            to="/patient/lesions"
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[var(--base-content-secondary)] hover:bg-gray-100 hover:text-gray-900 transition flex items-center gap-1.5"
-          >
-            <span className="isax icon-camera text-sm"></span>
-            <span>Ảnh tổn thương</span>
-          </Link>
-        </div>
+      {/* Module Grouped Sub-navigation (Line Tab Style) */}
+      <div className="base-tab-nav !mb-2">
+        <Link
+          to="/patient/uas7"
+          className="base-tab-item is-active"
+        >
+          <span className="isax-b icon-chart-21 text-base"></span>
+          <span>Chấm điểm</span>
+        </Link>
+        <Link
+          to="/patient/lesions"
+          className="base-tab-item"
+        >
+          <span className="isax icon-camera text-base"></span>
+          <span>Ảnh tổn thương</span>
+        </Link>
       </div>
 
       {/* Tabs UAS7 vs AAS7 */}
