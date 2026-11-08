@@ -104,7 +104,7 @@ export const INITIAL_UAS7_SCORES = [
 export const INITIAL_TEMPLATES = [
   {
     id: "tmpl-01",
-    code: "TMPL_CSU_STANDARD",
+    code: "BM-CSU-01",
     name: "Phiếu Khai Thác Bệnh Sử Mày Đay Mạn Tính Chuẩn",
     description: "Bộ câu hỏi tiêu chuẩn phục vụ phân loại thể bệnh, nguyên nhân khởi phát và thang điểm hoạt tính.",
     is_active: true,

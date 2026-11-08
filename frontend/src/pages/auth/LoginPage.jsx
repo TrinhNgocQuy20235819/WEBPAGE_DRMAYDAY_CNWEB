@@ -44,10 +44,7 @@ export default function LoginPage() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-[var(--base-brand-navy)] tracking-tight">Đăng Nhập Hệ Thống</h2>
-        <p className="text-xs text-[var(--base-content-secondary)] mt-1">
-          Nhập số điện thoại bệnh nhân hoặc mã nhân viên y tế để truy cập
-        </p>
+        <h2 className="text-2xl font-bold text-[var(--base-brand-navy)] tracking-tight">Đăng nhập</h2>
       </div>
 
       {/* Role Selector Pill Tabs for easy demo */}
@@ -105,7 +102,7 @@ export default function LoginPage() {
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
-            Số Điện Thoại / Mã Định Danh
+            Số điện thoại
           </label>
           <div className="relative">
             <span className="isax icon-call text-base absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--base-content-tertiary)]"></span>
@@ -122,7 +119,7 @@ export default function LoginPage() {
 
         <div>
           <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
-            Mật Khẩu
+            Mật khẩu
           </label>
           <div className="relative">
             <span className="isax icon-lock text-base absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--base-content-tertiary)]"></span>
@@ -142,14 +139,21 @@ export default function LoginPage() {
               <span className={`isax ${showPassword ? "icon-eye" : "icon-eye-slash"} text-base`}></span>
             </button>
           </div>
+          <div className="flex justify-end mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-xs text-[var(--base-brand-blue)] hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
         </div>
 
         <button
           type="submit"
           className="base-btn base-btn-primary w-full py-3 text-sm font-bold shadow-sm justify-center cursor-pointer mt-2"
         >
-          <span className="isax icon-login-1 text-base"></span>
-          <span>Đăng Nhập Vào Hệ Thống</span>
+          <span>Đăng nhập</span>
         </button>
       </form>
 

@@ -97,7 +97,6 @@ export default function FormBuilder() {
                     <span>{tmpl.name}</span>
                     <span className="base-tag base-tag-positive text-[9px]">Kích hoạt</span>
                   </div>
-                  <p className="font-mono text-[10px] text-gray-500 mt-1">{tmpl.code}</p>
                   <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">{tmpl.description}</p>
                 </div>
               ))}
@@ -110,10 +109,8 @@ export default function FormBuilder() {
           <div className="base-card p-6 space-y-6">
             <div className="pb-3 border-b border-[var(--base-border-opaque)] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono text-[var(--base-brand-blue)] font-bold uppercase">
-                  {selectedTemplate.code}
-                </span>
-                <h3 className="text-base font-bold text-gray-900 mt-0.5">{selectedTemplate.name}</h3>
+                <h3 className="text-base font-bold text-gray-900">{selectedTemplate.name}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{selectedTemplate.description}</p>
               </div>
               <span className="base-tag base-tag-info font-bold text-xs">
                 {selectedTemplate.sections.length} Phân Mục
@@ -126,32 +123,45 @@ export default function FormBuilder() {
                 <div key={sec.id} className="p-4 rounded-xl border border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)] space-y-3">
                   <div className="flex items-center justify-between font-bold text-xs text-[var(--base-brand-navy)] uppercase tracking-wider">
                     <span>{sec.title}</span>
-                    <span className="text-[10px] font-mono text-gray-500">{sec.questions.length} câu hỏi</span>
+                    <span className="text-[10px] text-gray-500">{sec.questions.length} câu hỏi</span>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {sec.questions.map((q, qIdx) => (
-                      <div key={q.id} className="p-3 bg-white rounded-lg border border-[var(--base-border-opaque)] text-xs space-y-2">
-                        <div className="flex items-center justify-between font-semibold text-gray-900">
-                          <span>
-                            {secIdx + 1}.{qIdx + 1} {q.content}
-                          </span>
-                          <span className="base-tag base-tag-neutral text-[9px] uppercase font-bold">
-                            {q.type}
-                          </span>
+                      <div key={q.id} className="p-4 bg-white rounded-xl border border-[var(--base-border-opaque)] shadow-2xs text-xs space-y-3">
+                        <div className="font-semibold text-gray-900 text-sm">
+                          {secIdx + 1}.{qIdx + 1} {q.content}
                         </div>
 
-                        {/* Options */}
-                        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--base-border-opaque)]">
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Lựa chọn:</span>
-                          {q.options.map((opt, oIdx) => (
-                            <span
-                              key={oIdx}
-                              className="px-2 py-0.5 bg-gray-100 rounded text-[11px] text-gray-700 font-medium"
-                            >
-                              {opt}
-                            </span>
-                          ))}
+                        {/* Interactive live preview of options */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--base-border-opaque)]">
+                          {q.options && q.options.length > 0 ? (
+                            q.options.map((opt, oIdx) => (
+                              <label
+                                key={oIdx}
+                                className="flex items-center gap-2.5 p-2.5 rounded-lg border border-[var(--base-border-opaque)] hover:bg-gray-50 hover:border-gray-300 transition cursor-pointer select-none"
+                              >
+                                <input
+                                  type={q.type === "checkbox" ? "checkbox" : "radio"}
+                                  name={`preview-${q.id}`}
+                                  defaultChecked={oIdx === 0}
+                                  className={
+                                    q.type === "checkbox"
+                                      ? "h-4 w-4 rounded text-[var(--base-brand-blue)] border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                      : "h-4 w-4 text-[var(--base-brand-blue)] border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                  }
+                                />
+                                <span className="text-xs text-gray-800 font-medium">{opt}</span>
+                              </label>
+                            ))
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="Nhập nội dung câu trả lời..."
+                              className="base-input text-xs"
+                              disabled
+                            />
+                          )}
                         </div>
                       </div>
                     ))}

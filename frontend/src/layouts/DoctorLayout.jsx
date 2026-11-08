@@ -86,7 +86,7 @@ export default function DoctorLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-white font-sans antialiased overflow-hidden">
+    <div className="flex h-screen bg-[#f8fafc] font-sans antialiased overflow-hidden">
       {/* Sidebar Bác Sĩ (Cột 280px) */}
       <aside className="w-[280px] bg-white border-r border-[var(--base-border-opaque)] flex flex-col justify-between shrink-0 z-20">
         <div>

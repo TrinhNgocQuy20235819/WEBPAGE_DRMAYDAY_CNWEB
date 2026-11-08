@@ -199,7 +199,7 @@ export default function TopologyManagement() {
                     <td className="font-mono font-bold text-xs text-[var(--base-brand-navy)]">{r.code}</td>
                     <td className="font-bold text-xs text-gray-900">{r.name}</td>
                     <td>
-                      <span className="base-tag base-tag-neutral text-[10px] uppercase font-bold">
+                      <span className="base-tag base-tag-neutral text-[10px] font-semibold">
                         {r.room_type === "clinic" ? "Phòng khám" : r.room_type === "lab" ? "Xét nghiệm" : "Thủ thuật"}
                       </span>
                     </td>

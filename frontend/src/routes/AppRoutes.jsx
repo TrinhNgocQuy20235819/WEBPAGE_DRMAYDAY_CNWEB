@@ -9,6 +9,7 @@ import AuthLayout from "../layouts/AuthLayout";
 // Auth Pages
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import NotFound from "../pages/NotFound";
 
 // Admin Pages
@@ -39,6 +40,7 @@ export default function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Route>
 
       {/* Admin Module Routes (Đầu việc 1) */}

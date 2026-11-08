@@ -114,7 +114,7 @@
   --base-bg-warning-tint: var(--base-warning-tint);
   --base-bg-info-tint: #bad6eb;
 
-  /* Borders & Dividers */
+  /* Borders & Dividers: Preserved crisp structural lines */
   --base-border-opaque: var(--base-gray-200);
   --base-border-strong: var(--base-gray-500);
   --base-border-selected: var(--base-brand-navy);
@@ -124,12 +124,13 @@
   --base-border-warning: var(--base-warning-fill);
   --base-border-info: var(--base-brand-sky);
 
-  /* --- COMPONENT TOKENS (BUTTON & INPUT SPECIFICATION) --- */
+  /* --- COMPONENT TOKENS (BUTTON SPECIFICATION) --- */
   --base-button-primary-bg: var(--base-brand-blue);
+  --base-button-primary-border: var(--base-brand-blue);
   --base-button-primary-text: var(--base-primitive-white);
   --base-button-primary-hover: var(--base-accent-700);
   --base-button-secondary-bg: var(--base-primitive-white);
-  --base-button-secondary-border: var(--base-border-opaque);
+  --base-button-secondary-border: #d1d5db;
   --base-button-secondary-text: var(--base-content-primary);
 
   --base-input-bg: var(--base-primitive-white);
@@ -152,14 +153,15 @@
   --base-scale-1000: 56px;
   --base-scale-1100: 64px;
 
-  /* --- D. BORDER RADII (UBER BASE SIZES) --- */
+  /* --- D. BORDER RADII (Border-radius = 0 across system, ONLY buttons have radius) --- */
   --base-radius-none: 0px;
-  --base-radius-100: 2px;
-  --base-radius-200: 4px;
-  --base-radius-300: 8px;
-  --base-radius-400: 12px;
-  --base-radius-500: 16px;
-  --base-radius-pill: 9999px;
+  --base-radius-100: 0px;
+  --base-radius-200: 0px;
+  --base-radius-300: 0px;
+  --base-radius-400: 0px;
+  --base-radius-500: 0px;
+  --base-radius-pill: 0px;
+  --base-radius-button: 8px; /* ONLY buttons retain border radius */
   --base-radius-round: 50%;
 
   /* --- E. ELEVATION / SHADOWS (BASE WEB HIERARCHY) --- */
@@ -337,7 +339,7 @@
 }
 
 /* 4. BASE WEB ATOM COMPONENTS */
-/* Buttons (Taste-skill Tactile Step & Press Layer) */
+/* Buttons (The ONLY components with border-radius in the design system) */
 .base-btn {
   display: inline-flex;
   align-items: center;
@@ -345,8 +347,8 @@
   gap: var(--base-scale-200);
   font-family: inherit;
   font-weight: 600;
-  border-radius: var(--base-radius-300);
-  border: 1px solid transparent;
+  border-radius: 8px !important; /* ONLY buttons retain rounded corners */
+  border: 1px solid #d1d5db; /* Explicit crisp border */
   cursor: pointer;
   transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
@@ -374,30 +376,32 @@
 .base-btn-primary {
   background-color: var(--base-gray-900);
   color: var(--base-primitive-white);
-  border-color: var(--base-gray-900);
+  border: 1px solid var(--base-gray-900) !important;
 }
 .base-btn-primary:hover {
   background-color: var(--base-gray-800);
+  border-color: var(--base-gray-800) !important;
 }
 .dark .base-btn-primary {
   background-color: var(--base-primitive-white);
   color: var(--base-gray-900);
-  border-color: var(--base-primitive-white);
+  border-color: var(--base-primitive-white) !important;
 }
 
 .base-btn-secondary {
-  background-color: var(--base-gray-100);
+  background-color: var(--base-primitive-white);
   color: var(--base-content-primary);
-  border-color: transparent;
+  border: 1px solid #d1d5db !important;
 }
 .base-btn-secondary:hover {
-  background-color: var(--base-gray-200);
+  background-color: var(--base-gray-50);
+  border-color: #9ca3af !important;
 }
 
 .base-btn-tertiary {
   background-color: transparent;
   color: var(--base-content-primary);
-  border-color: var(--base-border-opaque);
+  border: 1px solid #d1d5db !important;
 }
 .base-btn-tertiary:hover {
   background-color: var(--base-gray-100);
@@ -406,19 +410,21 @@
 .base-btn-accent {
   background-color: var(--base-accent-600);
   color: var(--base-primitive-white);
-  border-color: var(--base-accent-600);
+  border: 1px solid var(--base-accent-600) !important;
 }
 .base-btn-accent:hover {
   background-color: var(--base-accent-700);
+  border-color: var(--base-accent-700) !important;
 }
 
 .base-btn-negative {
   background-color: var(--base-negative-primary);
   color: var(--base-primitive-white);
-  border-color: var(--base-negative-primary);
+  border: 1px solid var(--base-negative-primary) !important;
 }
 .base-btn-negative:hover {
   background-color: var(--base-negative-hover);
+  border-color: var(--base-negative-hover) !important;
 }
 
 /* Button Sizes */
@@ -443,7 +449,7 @@
   font-size: 12px;
 }
 
-/* Base Inputs */
+/* Base Inputs (Border-radius = 0, crisp 1px border) */
 .base-input {
   width: 100%;
   height: 40px;
@@ -451,31 +457,29 @@
   font-size: 14px;
   color: var(--base-content-primary);
   background-color: var(--base-bg-surface);
-  border: 1px solid var(--base-border-opaque);
-  border-radius: var(--base-radius-300);
+  border: 1px solid var(--base-border-opaque) !important;
+  border-radius: 0 !important;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 .base-input:focus {
   outline: none;
-  border-color: var(--base-border-selected);
+  border-color: var(--base-border-selected) !important;
   box-shadow: 0 0 0 1px var(--base-border-selected);
 }
 .base-input.is-error {
-  border-color: var(--base-negative-fill);
-}
-.base-input.is-error:focus {
-  box-shadow: 0 0 0 1px var(--base-negative-fill);
+  border-color: var(--base-negative-fill) !important;
 }
 
-/* Base Tags */
+/* Base Tags (Border-radius = 0) */
 .base-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--base-radius-pill);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 0 !important;
+  border: 1px solid transparent;
 }
 .base-tag-neutral {
   background-color: var(--base-gray-100);
@@ -484,41 +488,36 @@
 .base-tag-positive {
   background-color: var(--base-positive-tint);
   color: var(--base-positive-primary);
-  border: 1px solid rgba(75, 206, 151, 0.4);
 }
 .base-tag-negative {
   background-color: var(--base-negative-tint);
   color: var(--base-negative-primary);
-  border: 1px solid rgba(239, 92, 72, 0.4);
 }
 .base-tag-warning {
   background-color: var(--base-warning-tint);
   color: var(--base-warning-primary);
-  border: 1px solid rgba(245, 205, 71, 0.4);
 }
 .base-tag-info {
   background-color: var(--base-info-tint);
   color: var(--base-info-primary);
-  border: 1px solid rgba(56, 139, 255, 0.4);
 }
 
-/* 5. BASE WEB COMPLEX MOLECULES & SURFACES */
-
-/* Base Cards & Surfaces */
+/* 5. BASE WEB COMPLEX MOLECULES & SURFACES (Border-radius = 0, crisp 1px border) */
 .base-card {
   background-color: var(--base-primitive-white);
-  border: 1px solid var(--base-border-opaque);
-  border-radius: var(--base-radius-400);
+  border: 1px solid var(--base-border-opaque) !important;
+  border-radius: 0 !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .base-card:hover {
-  border-color: var(--base-brand-sky);
+  border-color: var(--base-brand-sky) !important;
   box-shadow: 0 4px 12px -2px rgba(9, 31, 91, 0.06);
 }
 .dark .base-card {
   background-color: #0b1324;
-  border-color: #1e293b;
+  border-color: #1e293b !important;
+  border-radius: 0 !important;
 }
 .dark .base-card:hover {
   border-color: var(--base-brand-blue);
@@ -588,7 +587,7 @@ button:hover .icon-arrow-right,
 }
 .base-card-header {
   padding: 14px 20px;
-  border-bottom: 1px solid var(--base-border-opaque);
+  border-bottom: 1px solid var(--base-border-opaque) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -609,30 +608,29 @@ button:hover .icon-arrow-right,
 }
 .base-card-footer {
   padding: 12px 20px;
-  border-top: 1px solid var(--base-border-opaque);
+  border-top: 1px solid var(--base-border-opaque) !important;
   background-color: var(--base-bg-surface-alt);
-  border-bottom-left-radius: var(--base-radius-400);
-  border-bottom-right-radius: var(--base-radius-400);
+  border-radius: 0 !important;
 }
 
-/* List Groups (Invoika / Enterprise Structure) */
+/* List Groups (Border-radius = 0) */
 .base-list-group {
   display: flex;
   flex-direction: column;
   padding-left: 0;
   margin-bottom: 0;
-  border-radius: var(--base-radius-300);
-  border: 1px solid var(--base-border-opaque);
+  border-radius: 0 !important;
+  border: 1px solid var(--base-border-opaque) !important;
   background-color: var(--base-primitive-white);
   overflow: hidden;
 }
 .dark .base-list-group {
   background-color: #0b1324;
-  border-color: #1e293b;
+  border-color: #1e293b !important;
 }
 .base-list-group-flush {
-  border: none;
-  border-radius: 0;
+  border: none !important;
+  border-radius: 0 !important;
 }
 .base-list-group-item {
   position: relative;
@@ -643,7 +641,7 @@ button:hover .icon-arrow-right,
   padding: 12px 16px;
   color: var(--base-content-primary);
   background-color: transparent;
-  border-bottom: 1px solid var(--base-border-opaque);
+  border-bottom: 1px solid var(--base-border-opaque) !important;
   text-decoration: none;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -1256,7 +1254,7 @@ button:hover .icon-arrow-right,
 }
 .base-modal-footer {
   padding: 14px 20px;
-  border-top: 1px solid var(--base-border-opaque);
+  border-top: 1px solid var(--base-border-opaque) !important;
   background-color: var(--base-bg-surface-alt);
   display: flex;
   align-items: center;
@@ -1264,12 +1262,12 @@ button:hover .icon-arrow-right,
   gap: var(--base-scale-300);
 }
 
-/* Invoika Action Tables */
+/* Invoika Action Tables (Border-radius = 0) */
 .base-table-container {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--base-border-opaque);
-  border-radius: var(--base-radius-300);
+  border: 1px solid var(--base-border-opaque) !important;
+  border-radius: 0 !important;
 }
 .base-table {
   width: 100%;
@@ -1284,14 +1282,14 @@ button:hover .icon-arrow-right,
   letter-spacing: 0.04em;
   color: var(--base-content-secondary);
   background-color: var(--base-bg-surface-alt);
-  border-bottom: 1px solid var(--base-border-opaque);
+  border-bottom: 1px solid var(--base-border-opaque) !important;
   white-space: nowrap;
 }
 .base-table td {
   padding: 12px 16px;
   font-size: 13px;
   color: var(--base-content-primary);
-  border-bottom: 1px solid var(--base-border-opaque);
+  border-bottom: 1px solid var(--base-border-opaque) !important;
   vertical-align: middle;
 }
 .base-table tbody tr {
@@ -1301,7 +1299,7 @@ button:hover .icon-arrow-right,
   background-color: var(--base-bg-surface-alt);
 }
 .base-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 
@@ -1413,15 +1411,16 @@ button:hover .icon-arrow-right,
 }
 .base-btn-hero-accent:active { transform: scale(0.97); }
 
-/* --- STAT METRIC CARD (Premium KPI widget) --- */
+/* --- STAT METRIC CARD (Border-free Premium KPI widget) --- */
 .base-stat-card {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   background: var(--base-primitive-white);
-  border: 1px solid var(--base-border-opaque);
-  border-radius: var(--base-radius-400);
+  border: 1px solid var(--base-border-opaque) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   padding: 20px 20px 16px;
   transition: box-shadow 0.18s ease, transform 0.14s ease;
   overflow: hidden;
