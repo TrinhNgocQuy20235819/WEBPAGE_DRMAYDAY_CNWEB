@@ -10,21 +10,21 @@ export default function DoctorLesionReview() {
 
   const stages = [
     {
-      title: "Giai Đoạn 1: Khởi Phát (Onset)",
+      title: "Khởi phát",
       time: "08/03/2026 07:30",
       description: "Sẩn đỏ li ti, bắt đầu cảm giác châm chích và ngứa",
       url: "/images/clinic/clinic-urticaria-rash.jpg",
       tag: "base-tag-warning",
     },
     {
-      title: "Giai Đoạn 2: Đỉnh Điểm (Peak)",
+      title: "Đỉnh điểm",
       time: "08/03/2026 12:45",
       description: "Các nốt sẩn kết tụ thành mảng phù nề lớn, ngứa dữ dội",
       url: "/images/clinic/clinic-examination.jpg",
       tag: "base-tag-negative",
     },
     {
-      title: "Giai Đoạn 3: Thuyên Giảm (Remission)",
+      title: "Thuyên giảm",
       time: "08/03/2026 17:15",
       description: "Nốt sẩn nhạt dần và lặn biến mất hoàn toàn không để lại sẹo",
       url: "/images/clinic/clinic-consultation-02.jpg",
@@ -42,21 +42,16 @@ export default function DoctorLesionReview() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/doctor" className="hover:text-white transition">Hàng đợi khám</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Đối chiếu ảnh tổn thương</span>
-            </div>
-            <h1 className="base-hero-title">Đối Chiếu Tiến Triển Tổn Thương Da 3 Mốc</h1>
+            <h1 className="base-hero-title">Ảnh Tổn Thương 3 Mốc</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-camera text-sm"></span>
-              <span>Đánh giá chu kỳ khởi phát, đỉnh điểm và thuyên giảm để phân biệt với viêm mạch mày đay</span>
+              <span>Đối chiếu chu kỳ sẩn phù qua 3 giai đoạn</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <Link to="/doctor" className="base-btn-hero-primary">
               <span className="isax icon-arrow-left-2 text-sm"></span>
-              <span>Hàng Đợi Ca Khám</span>
+              <span>Quay lại</span>
             </Link>
           </div>
         </div>
@@ -78,7 +73,7 @@ export default function DoctorLesionReview() {
         </div>
 
         <span className="base-tag base-tag-info font-bold text-xs">
-          3 Mốc Giai Đoạn Hoàn Chỉnh
+          Đủ 3 mốc
         </span>
       </div>
 

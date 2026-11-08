@@ -73,17 +73,10 @@ export default function UserManagement() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/admin" className="hover:text-white transition">Quản trị</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/70">Nghiệp vụ lâm sàng</span>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Danh bạ nhân sự y tế</span>
-            </div>
-            <h1 className="base-hero-title">Danh Bạ Nhân Sự Y Tế &amp; Phân Quyền</h1>
+            <h1 className="base-hero-title">Nhân Sự Y Tế &amp; Phân Quyền</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-profile-2user text-sm"></span>
-              <span>Quản lý danh bạ Bác sĩ chuyên khoa, Điều dưỡng và điều phối phân công phòng khám</span>
+              <span>Danh bạ bác sĩ, điều dưỡng và điều phối phòng trực</span>
             </p>
           </div>
           <div className="base-hero-actions">
@@ -92,7 +85,7 @@ export default function UserManagement() {
               className="base-btn-hero-accent cursor-pointer"
             >
               <span className="isax icon-user-add text-sm"></span>
-              <span>Thêm Nhân Sự Y Tế</span>
+              <span>Thêm nhân sự</span>
             </button>
           </div>
         </div>
@@ -152,10 +145,10 @@ export default function UserManagement() {
       <div className="base-card overflow-hidden">
         <div className="base-card-header flex items-center justify-between">
           <div>
-            <h2 className="base-card-title">Bảng Phân Công Công Tác Nhân Sự Y Tế</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Danh bạ nhân sự đang tham gia khám chữa bệnh mày đay toàn viện</p>
+            <h2 className="base-card-title">Danh Sách Nhân Sự</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Nhân sự y tế đang công tác</p>
           </div>
-          <span className="base-tag base-tag-info font-mono text-[10px]">{filtered.length} kết quả</span>
+          <span className="base-tag base-tag-info font-mono text-[10px]">{filtered.length}</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -163,10 +156,10 @@ export default function UserManagement() {
             <thead>
               <tr>
                 <th>Mã NV</th>
-                <th>Họ và tên y bác sĩ</th>
-                <th>Chuyên khoa lâm sàng</th>
-                <th>Phòng làm việc trực tiếp</th>
-                <th>Trạng thái trực</th>
+                <th>Họ và tên</th>
+                <th>Chuyên khoa</th>
+                <th>Phòng làm việc</th>
+                <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody>

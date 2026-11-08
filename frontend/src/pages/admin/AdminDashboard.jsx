@@ -22,22 +22,22 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
               <span className="text-white/70">Quản trị</span>
               <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Bảng điều khiển trung tâm</span>
+              <span className="text-white/90 font-medium">Tổng quan</span>
             </div>
-            <h1 className="base-hero-title">Bảng Điều Khiển Quản Trị Trung Tâm</h1>
+            <h1 className="base-hero-title">Tổng Quan Quản Trị</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-buildings text-sm"></span>
-              <span>Giám sát hoạt động khám chữa bệnh, cây hạ tầng chi nhánh và biểu mẫu khám động</span>
+              <span>Giám sát hoạt động khám bệnh, hạ tầng và biểu mẫu</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <Link to="/admin/topology" className="base-btn-hero-primary">
               <span className="isax icon-buildings text-sm"></span>
-              <span>Cây Hạ Tầng</span>
+              <span>Hạ tầng</span>
             </Link>
             <Link to="/admin/form-builder" className="base-btn-hero-accent">
               <span className="isax-b icon-document-text text-sm"></span>
-              <span>Bộ Tạo Mẫu Phiếu Khám</span>
+              <span>Biểu mẫu</span>
             </Link>
           </div>
         </div>
@@ -121,8 +121,8 @@ export default function AdminDashboard() {
           <div className="base-card overflow-hidden">
             <div className="base-card-header flex items-center justify-between">
               <div>
-                <h2 className="base-card-title">Danh Sách Ca Khám Toàn Viện</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Giám sát trạng thái xử lý bệnh án theo thời gian thực</p>
+                <h2 className="base-card-title">Ca Khám Toàn Viện</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Giám sát trạng thái xử lý bệnh án thời gian thực</p>
               </div>
               <Link to="/doctor" className="base-btn base-btn-secondary base-btn-compact text-xs">
                 <span>Hàng đợi Bác sĩ</span>
@@ -134,10 +134,10 @@ export default function AdminDashboard() {
               <table className="base-table">
                 <thead>
                   <tr>
-                    <th>Mã bệnh án</th>
+                    <th>Mã BA</th>
                     <th>Bệnh nhân</th>
-                    <th>Phân loại</th>
-                    <th>Bác sĩ phụ trách</th>
+                    <th>Thể bệnh</th>
+                    <th>Bác sĩ</th>
                     <th>Trạng thái</th>
                   </tr>
                 </thead>
@@ -154,11 +154,11 @@ export default function AdminDashboard() {
                       <td>
                         {r.clinical_type === "chronic" ? (
                           <span className="base-tag base-tag-info font-bold text-[10px]">
-                            Mạn tính (&ge;6w)
+                            Mạn tính
                           </span>
                         ) : (
                           <span className="base-tag base-tag-warning font-bold text-[10px]">
-                            Cấp tính (&lt;6w)
+                            Cấp tính
                           </span>
                         )}
                       </td>
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                               : "base-tag-warning"
                           }`}
                         >
-                          {r.status === "completed" ? "Hoàn tất" : r.status === "in_progress" ? "Đang khám" : "Chờ khám"}
+                          {r.status === "completed" ? "Đã khám" : r.status === "in_progress" ? "Đang khám" : "Chờ khám"}
                         </span>
                       </td>
                     </tr>

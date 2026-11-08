@@ -55,14 +55,14 @@ export default function PatientDashboard() {
             <span className="isax-b icon-clock text-xl"></span>
           </div>
           <div>
-            <div className="text-xs font-bold text-gray-900">Nhắc nhở: Sàng lọc Báo động đỏ phản vệ &lt; 30 giây</div>
+            <div className="text-xs font-bold text-gray-900">Cảnh báo: Sàng lọc phản vệ trong 30 giây</div>
             <p className="text-xs text-gray-600 mt-0.5">
-              Nếu bạn có dấu hiệu khó thở, nghẹn họng hoặc chóng mặt choáng ngất, hãy kích hoạt sàng lọc khẩn cấp ngay.
+              Nếu xuất hiện khó thở, sưng họng hoặc choáng ngất, hãy kích hoạt Báo động đỏ ngay.
             </p>
           </div>
         </div>
         <Link to="/patient/screening" className="base-btn base-btn-compact base-btn-primary shrink-0 self-start sm:self-auto text-xs">
-          <span>Sàng lọc khẩn cấp</span>
+          <span>Báo động đỏ</span>
           <span className="isax icon-arrow-right-1 text-xs"></span>
         </Link>
       </div>
@@ -72,7 +72,7 @@ export default function PatientDashboard() {
         {/* Card 1: Today UAS */}
         <div className="base-stat-card">
           <div className="flex items-center justify-between">
-            <span className="base-stat-card-label">Điểm UAS hôm nay</span>
+            <span className="base-stat-card-label">UAS hôm nay</span>
             <div className="base-stat-card-icon">
               <span className="isax icon-chart-2 text-lg"></span>
             </div>
@@ -80,7 +80,7 @@ export default function PatientDashboard() {
           {todayScore ? (
             <div>
               <span className="base-stat-card-value">{todayScore.daily_score}</span>
-              <span className="base-stat-card-unit">/ 6 điểm</span>
+              <span className="base-stat-card-unit">/ 6</span>
               <div className="flex items-center gap-3 text-xs text-[var(--base-content-secondary)] mt-2">
                 <span>HSS: <strong className="text-[var(--base-content-primary)]">{todayScore.hss7}/3</strong></span>
                 <span>•</span>
@@ -92,7 +92,7 @@ export default function PatientDashboard() {
           )}
           <div className="base-stat-card-footer">
             <Link to="/patient/uas7" className="base-link-arrow">
-              <span>Xem nhật ký chi tiết</span>
+              <span>Xem nhật ký</span>
               <span className="isax icon-arrow-right-1 arrow-icon text-xs"></span>
             </Link>
           </div>
@@ -101,7 +101,7 @@ export default function PatientDashboard() {
         {/* Card 2: Weekly UAS7 */}
         <div className="base-stat-card">
           <div className="flex items-center justify-between">
-            <span className="base-stat-card-label">Tổng điểm hoạt tính tuần (UAS7)</span>
+            <span className="base-stat-card-label">Điểm UAS7 tuần</span>
             <div className="base-stat-card-icon">
               <span className="isax icon-chart-success text-lg"></span>
             </div>
@@ -112,12 +112,12 @@ export default function PatientDashboard() {
           </div>
           <div>
             <span className={`base-tag ${getSeverity(weeklyTotal).class}`}>
-              {getSeverity(weeklyTotal).label} ({weeklyTotal} điểm)
+              {getSeverity(weeklyTotal).label}
             </span>
           </div>
           <div className="base-stat-card-footer">
             <span className="text-xs text-[var(--base-content-secondary)]">
-              Điểm trung bình: <strong className="text-gray-900">{weeklyAvg}</strong> / ngày
+              Trung bình: <strong className="text-gray-900">{weeklyAvg}</strong> / ngày
             </span>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function PatientDashboard() {
         {/* Card 3: Recent Record */}
         <div className="base-stat-card">
           <div className="flex items-center justify-between">
-            <span className="base-stat-card-label">Hồ sơ bệnh án gần nhất</span>
+            <span className="base-stat-card-label">Bệnh án gần nhất</span>
             <div className="base-stat-card-icon">
               <span className="isax icon-document-text text-lg"></span>
             </div>

@@ -82,17 +82,10 @@ export default function TopologyManagement() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/admin" className="hover:text-white transition">Quản trị</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/70">Cơ cấu tổ chức</span>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Hạ tầng y tế</span>
-            </div>
-            <h1 className="base-hero-title">Cơ Cấu Tổ Chức &amp; Hạ Tầng Y Tế</h1>
+            <h1 className="base-hero-title">Hạ Tầng Cơ Sở Y Tế</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-buildings text-sm"></span>
-              <span>Mô hình phân cấp 3 tầng: Cơ sở bệnh viện → Khoa chuyên môn → Phòng khám &amp; phòng chức năng</span>
+              <span>Quản lý phân cấp cơ sở, khoa chuyên môn và phòng khám</span>
             </p>
           </div>
           <div className="base-hero-actions">
@@ -101,34 +94,34 @@ export default function TopologyManagement() {
               className="base-btn-hero-accent cursor-pointer"
             >
               <span className="isax icon-add text-sm"></span>
-              <span>Thêm {activeTab === "branches" ? "Cơ Sở" : activeTab === "departments" ? "Khoa" : "Phòng Khám"}</span>
+              <span>Thêm {activeTab === "branches" ? "cơ sở" : activeTab === "departments" ? "khoa" : "phòng"}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Primary Line Tabs (Phân cấp 3 tầng) */}
-      <div className="base-tab-nav overflow-x-auto">
+      {/* Primary Line Tabs */}
+      <div className="base-tab-nav">
         <button
           onClick={() => handleTabChange("branches")}
           className={`base-tab-item ${activeTab === "branches" ? "is-active" : ""}`}
         >
           <span className="isax icon-buildings text-base"></span>
-          <span>1. Cơ Sở Bệnh Viện ({branches.length})</span>
+          <span>Cơ sở ({branches.length})</span>
         </button>
         <button
           onClick={() => handleTabChange("departments")}
           className={`base-tab-item ${activeTab === "departments" ? "is-active" : ""}`}
         >
           <span className="isax icon-hospital text-base"></span>
-          <span>2. Khoa Chuyên Môn ({departments.length})</span>
+          <span>Khoa ({departments.length})</span>
         </button>
         <button
           onClick={() => handleTabChange("rooms")}
           className={`base-tab-item ${activeTab === "rooms" ? "is-active" : ""}`}
         >
           <span className="isax icon-health text-base"></span>
-          <span>3. Phòng Khám &amp; Thủ Thuật ({rooms.length})</span>
+          <span>Phòng khám ({rooms.length})</span>
         </button>
       </div>
 

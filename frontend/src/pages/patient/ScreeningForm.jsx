@@ -34,21 +34,16 @@ export default function ScreeningForm() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Sàng lọc khẩn cấp</span>
-            </div>
-            <h1 className="base-hero-title">Sàng Lọc Lâm Sàng &amp; Báo Động Nguy Cấp</h1>
+            <h1 className="base-hero-title">Sàng Lọc Báo Động Đỏ</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-shield-tick text-sm"></span>
-              <span>Quy chuẩn y tế Bộ Y Tế: Tự sàng lọc nguy cơ sốc phản vệ trong 30 giây trước khi khám</span>
+              <span>Kiểm tra dấu hiệu sốc phản vệ trong 30 giây</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <span className="base-btn-hero-primary !border-rose-400/40 !bg-rose-500/20 text-rose-100 !cursor-default">
               <span className="isax-b icon-danger text-sm"></span>
-              <span>Báo Động Đỏ &lt; 30s</span>
+              <span>Báo động đỏ</span>
             </span>
           </div>
         </div>
@@ -91,14 +86,14 @@ export default function ScreeningForm() {
         <div className="base-card-header bg-rose-50 border-b border-rose-200">
           <div className="flex items-center gap-2 text-rose-800 font-bold text-xs uppercase tracking-wider">
             <span className="isax-b icon-danger text-base"></span>
-            <span>Bước 0: Sàng Lọc Dấu Hiệu Cảnh Báo Nguy Hiểm (Nguy Cơ Phản Vệ)</span>
+            <span>Dấu hiệu cảnh báo nguy hiểm</span>
           </div>
-          <span className="base-tag base-tag-negative font-mono text-[10px]">Mục tiêu &lt; 30 giây</span>
+          <span className="base-tag base-tag-negative font-mono text-[10px]">Khẩn cấp</span>
         </div>
 
         <div className="base-card-body space-y-3">
           <p className="text-xs text-gray-600 mb-2">
-            Bạn có đang gặp phải tình trạng nào sau đây không? (Đánh dấu nếu có):
+            Đánh dấu nếu bạn đang có các triệu chứng sau:
           </p>
 
           <label
@@ -116,7 +111,6 @@ export default function ScreeningForm() {
               <div className="text-xs font-bold text-gray-900">
                 1. Khó thở, thở khò khè hoặc cảm giác nghẹn tắc ở cổ họng
               </div>
-              <div className="text-[11px] text-gray-500 mt-0.5">Dấu hiệu co thắt phế quản hoặc phù nề đường thở cấp tính</div>
             </div>
           </label>
 
@@ -135,7 +129,6 @@ export default function ScreeningForm() {
               <div className="text-xs font-bold text-gray-900">
                 2. Chóng mặt, hoa mắt, choáng váng hoặc ngất xỉu
               </div>
-              <div className="text-[11px] text-gray-500 mt-0.5">Dấu hiệu tụt huyết áp cấp trong phản vệ</div>
             </div>
           </label>
 
@@ -154,7 +147,6 @@ export default function ScreeningForm() {
               <div className="text-xs font-bold text-gray-900">
                 3. Sưng nề dữ dội vùng lưỡi, hầu họng gây khó nuốt hoặc khàn tiếng
               </div>
-              <div className="text-[11px] text-gray-500 mt-0.5">Phù mạch thanh quản nguy hiểm</div>
             </div>
           </label>
         </div>
@@ -167,7 +159,7 @@ export default function ScreeningForm() {
             <h2 className="base-card-title">{template.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
           </div>
-          <span className="base-tag base-tag-info font-mono text-[10px]">Chuẩn Bộ Y Tế</span>
+          <span className="base-tag base-tag-info font-mono text-[10px]">Tiêu chuẩn</span>
         </div>
 
         <div className="base-card-body space-y-6">
@@ -178,8 +170,8 @@ export default function ScreeningForm() {
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { val: "under_6w", title: "Dưới 6 tuần", desc: "Mày đay cấp tính" },
-                { val: "over_6w", title: "Từ 6 tuần trở lên (Điển hình)", desc: "Mày đay mạn tính (CSU/CIndU)" },
+                { val: "under_6w", title: "Dưới 6 tuần", desc: "Cấp tính" },
+                { val: "over_6w", title: "Từ 6 tuần trở lên", desc: "Mạn tính" },
               ].map((opt) => (
                 <div
                   key={opt.val}
@@ -212,8 +204,8 @@ export default function ScreeningForm() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { val: "under_1h", title: "Dưới 1 giờ", desc: "Mày đay vật lý" },
-                { val: "1_to_24h", title: "Từ 1 đến 24 giờ", desc: "Điển hình mày đay thông thường" },
-                { val: "over_24h", title: "Kéo dài trên 24 giờ", desc: "Nghi ngờ viêm mạch mày đay" },
+                { val: "1_to_24h", title: "1 đến 24 giờ", desc: "Mày đay thông thường" },
+                { val: "over_24h", title: "Trên 24 giờ", desc: "Nghi ngờ viêm mạch" },
               ].map((opt) => (
                 <div
                   key={opt.val}

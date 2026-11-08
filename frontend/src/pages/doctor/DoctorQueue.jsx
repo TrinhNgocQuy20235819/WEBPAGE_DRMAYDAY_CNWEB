@@ -50,7 +50,7 @@ export default function DoctorQueue() {
           : r
       )
     );
-    toast.success("Bác sĩ đã tiếp nhận ca khám lâm sàng!");
+    toast.success("Bác sĩ đã tiếp nhận ca khám!");
     navigate("/doctor/prescriptions");
   };
 
@@ -75,30 +75,25 @@ export default function DoctorQueue() {
       room_name: "Phòng 301 - Tiếp đón",
       uas7_today: null,
       created_at: new Date().toISOString(),
-      diagnosis: newPatient.clinical_type === "chronic" ? "Mày đay mạn tính tái phát" : "Mày đay cấp tính nghi dị ứng",
-      symptoms: "Bệnh nhân mới tiếp nhận tại quầy khám.",
+      diagnosis: newPatient.clinical_type === "chronic" ? "Mày đay mạn tính" : "Mày đay cấp tính",
+      symptoms: "Bệnh nhân mới tiếp nhận.",
       prescriptions: [],
     };
     setRecords([created, ...records]);
     setShowAddModal(false);
-    toast.success(`Đã tiếp nhận bệnh nhân mới: ${created.record_code}`);
+    toast.success(`Đã tiếp nhận bệnh nhân: ${created.record_code}`);
   };
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner */}
+      {/* Hero Banner (Tràn viền, súc tích) */}
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <span className="text-white/70">Lâm sàng &amp; Khám bệnh</span>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Hàng đợi khám lâm sàng</span>
-            </div>
-            <h1 className="base-hero-title">Hàng Đợi Ca Khám Lâm Sàng</h1>
+            <h1 className="base-hero-title">Hàng Đợi Khám Bệnh</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-clock text-sm"></span>
-              <span>Phân luồng theo thời gian thực: Chờ tiếp nhận → Đang khám → Hoàn tất bệnh án</span>
+              <span>Tiếp nhận và điều phối bệnh nhân trong ngày</span>
             </p>
           </div>
           <div className="base-hero-actions">
@@ -117,14 +112,14 @@ export default function DoctorQueue() {
               className="base-btn-hero-accent cursor-pointer text-xs"
             >
               <span className="isax icon-user-add text-sm"></span>
-              <span>Tiếp Nhận BN Mới</span>
+              <span>Tiếp nhận BN</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Primary Line Tabs (Phân nhóm trạng thái ca khám) */}
-      <div className="base-tab-nav overflow-x-auto">
+      {/* Primary Line Tabs (Style chuẩn Image 2) */}
+      <div className="base-tab-nav">
         <button
           onClick={() => handleFilterChange("all")}
           className={`base-tab-item ${filter === "all" ? "is-active" : ""}`}
@@ -136,36 +131,36 @@ export default function DoctorQueue() {
           onClick={() => handleFilterChange("pending")}
           className={`base-tab-item ${filter === "pending" ? "is-active" : ""}`}
         >
-          <span className="isax icon-clock text-base text-amber-600"></span>
-          <span>1. Chờ Tiếp Nhận ({records.filter((r) => r.status === "pending").length})</span>
+          <span className="isax icon-clock text-base"></span>
+          <span>Chờ khám ({records.filter((r) => r.status === "pending").length})</span>
         </button>
         <button
           onClick={() => handleFilterChange("in_progress")}
           className={`base-tab-item ${filter === "in_progress" ? "is-active" : ""}`}
         >
-          <span className="isax icon-health text-base text-[var(--base-brand-blue)]"></span>
-          <span>2. Đang Khám ({records.filter((r) => r.status === "in_progress").length})</span>
+          <span className="isax icon-health text-base"></span>
+          <span>Đang khám ({records.filter((r) => r.status === "in_progress").length})</span>
         </button>
         <button
           onClick={() => handleFilterChange("completed")}
           className={`base-tab-item ${filter === "completed" ? "is-active" : ""}`}
         >
-          <span className="isax icon-tick-circle text-base text-[var(--base-positive-primary)]"></span>
-          <span>3. Đã Hoàn Tất ({records.filter((r) => r.status === "completed").length})</span>
+          <span className="isax icon-tick-circle text-base"></span>
+          <span>Đã khám ({records.filter((r) => r.status === "completed").length})</span>
         </button>
       </div>
 
-      {/* Bảng danh sách hàng đợi (Invoika Standard Table với Phân Trang) */}
+      {/* Bảng danh sách hàng đợi (Wording tinh gọn) */}
       <div className="base-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="base-table">
             <thead>
               <tr>
-                <th>Mã bệnh án</th>
-                <th>Bệnh nhân &amp; SĐT</th>
-                <th>Phân loại mày đay</th>
-                <th>Phòng khám</th>
-                <th>Bác sĩ phụ trách</th>
+                <th>Mã BA</th>
+                <th>Bệnh nhân</th>
+                <th>Thể bệnh</th>
+                <th>Phòng</th>
+                <th>Bác sĩ</th>
                 <th>Trạng thái</th>
                 <th className="text-right">Thao tác</th>
               </tr>
@@ -184,11 +179,11 @@ export default function DoctorQueue() {
                     <td>
                       {r.clinical_type === "chronic" ? (
                         <span className="base-tag base-tag-info font-bold text-[10px]">
-                          Mạn tính (&ge;6 tuần)
+                          Mạn tính
                         </span>
                       ) : (
                         <span className="base-tag base-tag-warning font-bold text-[10px]">
-                          Cấp tính (&lt;6 tuần)
+                          Cấp tính
                         </span>
                       )}
                     </td>
@@ -206,7 +201,7 @@ export default function DoctorQueue() {
                             : "base-tag-warning"
                         }`}
                       >
-                        {r.status === "completed" ? "Đã chốt bệnh án" : r.status === "in_progress" ? "Đang khám" : "Chờ tiếp nhận"}
+                        {r.status === "completed" ? "Đã khám" : r.status === "in_progress" ? "Đang khám" : "Chờ khám"}
                       </span>
                     </td>
                     <td className="text-right">
@@ -216,7 +211,7 @@ export default function DoctorQueue() {
                           className="base-btn base-btn-primary base-btn-compact text-xs cursor-pointer"
                         >
                           <span className="isax icon-user-tick text-xs"></span>
-                          <span>Nhận Ca Khám</span>
+                          <span>Khám</span>
                         </button>
                       ) : (
                         <Link
@@ -224,7 +219,7 @@ export default function DoctorQueue() {
                           className="base-btn base-btn-secondary base-btn-compact text-xs"
                         >
                           <span className="isax icon-health text-xs"></span>
-                          <span>Xem Bệnh Án</span>
+                          <span>Chi tiết</span>
                         </Link>
                       )}
                     </td>
@@ -234,7 +229,7 @@ export default function DoctorQueue() {
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-gray-400 text-xs">
                     <span className="isax icon-document text-3xl block mb-2 text-gray-300"></span>
-                    Không tìm thấy ca khám nào phù hợp với bộ lọc hiện tại.
+                    Không có ca khám nào phù hợp.
                   </td>
                 </tr>
               )}
@@ -262,7 +257,7 @@ export default function DoctorQueue() {
         <div className="base-modal-backdrop">
           <div className="base-modal-dialog max-w-md w-full">
             <div className="base-modal-header">
-              <h3 className="base-modal-title">Tiếp Nhận Bệnh Nhân Mới</h3>
+              <h3 className="base-modal-title">Tiếp Nhận Bệnh Nhân</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
@@ -271,7 +266,7 @@ export default function DoctorQueue() {
             <form onSubmit={handleCreatePatient}>
               <div className="base-modal-body space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Họ và tên bệnh nhân *</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Họ và tên *</label>
                   <input
                     type="text"
                     value={newPatient.name}
@@ -318,14 +313,14 @@ export default function DoctorQueue() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Phân loại lâm sàng ban đầu</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Thể bệnh</label>
                   <select
                     value={newPatient.clinical_type}
                     onChange={(e) => setNewPatient({ ...newPatient, clinical_type: e.target.value })}
                     className="base-input text-xs"
                   >
-                    <option value="chronic">Mày đay mạn tính (&ge;6 tuần)</option>
-                    <option value="acute">Mày đay cấp tính (&lt;6 tuần)</option>
+                    <option value="chronic">Mạn tính</option>
+                    <option value="acute">Cấp tính</option>
                   </select>
                 </div>
               </div>
@@ -339,7 +334,7 @@ export default function DoctorQueue() {
                   Hủy
                 </button>
                 <button type="submit" className="base-btn base-btn-primary base-btn-compact font-bold">
-                  Thêm Vào Hàng Đợi
+                  Tiếp nhận
                 </button>
               </div>
             </form>

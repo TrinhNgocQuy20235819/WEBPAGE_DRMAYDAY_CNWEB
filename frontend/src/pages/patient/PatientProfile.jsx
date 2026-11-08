@@ -28,21 +28,16 @@ export default function PatientProfile() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Hồ sơ cá nhân</span>
-            </div>
-            <h1 className="base-hero-title">Hồ Sơ Y Tế &amp; Định Danh Cá Nhân</h1>
+            <h1 className="base-hero-title">Hồ Sơ Y Tế &amp; BHYT</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-user text-sm"></span>
-              <span>Quản lý thông tin định danh, số thẻ BHYT và lịch sử đơn thuốc điện tử</span>
+              <span>Thông tin cá nhân, thẻ bảo hiểm và lịch sử khám</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <span className="base-btn-hero-primary !cursor-default">
               <span className="isax icon-shield-tick text-sm"></span>
-              <span>Bảo Mật Y Tế Chuẩn Bộ</span>
+              <span>Bảo mật</span>
             </span>
           </div>
         </div>

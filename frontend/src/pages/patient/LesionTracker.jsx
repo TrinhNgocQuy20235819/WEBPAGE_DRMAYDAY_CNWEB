@@ -49,23 +49,16 @@ export default function LesionTracker() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/70">Nhật ký điều trị</span>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Kho ảnh tổn thương</span>
-            </div>
-            <h1 className="base-hero-title">Nhật Ký Đợt Bùng Phát &amp; Tải Ảnh 3 Mốc</h1>
+            <h1 className="base-hero-title">Kho Ảnh Tổn Thương</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-camera text-sm"></span>
-              <span>Chụp và lưu trữ ảnh tổn thương theo 3 giai đoạn: Khởi phát → Đỉnh điểm → Thuyên giảm</span>
+              <span>Lưu trữ ảnh tổn thương qua 3 giai đoạn</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <Link to="/patient" className="base-btn-hero-primary">
               <span className="isax icon-arrow-left-2 text-sm"></span>
-              <span>Trang Chủ</span>
+              <span>Quay lại</span>
             </Link>
           </div>
         </div>
@@ -73,23 +66,20 @@ export default function LesionTracker() {
 
       {/* Module Grouped Sub-navigation */}
       <div className="flex items-center gap-2 border-b border-[var(--base-border-opaque)] pb-3">
-        <span className="text-xs font-bold text-[var(--base-content-disabled)] uppercase tracking-wider mr-2 hidden sm:inline">
-          Nhật ký điều trị:
-        </span>
         <div className="flex items-center gap-2">
           <Link
             to="/patient/uas7"
             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[var(--base-content-secondary)] hover:bg-gray-100 hover:text-gray-900 transition flex items-center gap-1.5"
           >
             <span className="isax icon-chart-21 text-sm"></span>
-            <span>1. Thang Đo UAS7 &amp; AAS7</span>
+            <span>Chấm điểm UAS7</span>
           </Link>
           <Link
             to="/patient/lesions"
             className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[var(--base-brand-navy)] text-white shadow-2xs flex items-center gap-1.5"
           >
             <span className="isax-b icon-camera text-sm"></span>
-            <span>2. Kho Ảnh Tổn Thương 3 Mốc</span>
+            <span>Ảnh tổn thương</span>
           </Link>
         </div>
       </div>
@@ -99,20 +89,20 @@ export default function LesionTracker() {
         <div className="lg:col-span-5 space-y-6">
           <form onSubmit={handleUpload} className="base-card p-6 space-y-5">
             <div className="pb-3 border-b border-[var(--base-border-opaque)]">
-              <h2 className="text-sm font-bold text-gray-900 uppercase">Ghi Nhận Ảnh Tổn Thương Mới</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Hỗ trợ Bác sĩ đánh giá tiến trình lặn của nốt sẩn</p>
+              <h2 className="text-sm font-bold text-gray-900 uppercase">Tải Ảnh Mới</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Theo dõi chu kỳ biến mất của nốt sẩn</p>
             </div>
 
             {/* Mốc giai đoạn */}
             <div>
               <label className="text-xs font-bold text-gray-900 block mb-1.5">
-                Mốc giai đoạn chụp ảnh *
+                Giai đoạn *
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: "onset", label: "1. Khởi phát" },
-                  { id: "peak", label: "2. Đỉnh điểm" },
-                  { id: "remission", label: "3. Thuyên giảm" },
+                  { id: "onset", label: "Khởi phát" },
+                  { id: "peak", label: "Đỉnh điểm" },
+                  { id: "remission", label: "Thuyên giảm" },
                 ].map((p) => (
                   <button
                     type="button"

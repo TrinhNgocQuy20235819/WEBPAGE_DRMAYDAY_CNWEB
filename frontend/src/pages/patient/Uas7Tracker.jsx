@@ -36,23 +36,16 @@ export default function Uas7Tracker() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/70">Nhật ký điều trị</span>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Chấm điểm hoạt tính</span>
-            </div>
-            <h1 className="base-hero-title">Nhật Ký Chấm Điểm UAS7 Hằng Ngày</h1>
+            <h1 className="base-hero-title">Chấm Điểm UAS7 &amp; AAS7</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-chart text-sm"></span>
-              <span>Theo dõi mức độ sẩn phù và ngứa trong 24 giờ theo tiêu chuẩn quốc tế EAACI/GA2LEN</span>
+              <span>Theo dõi mức độ sẩn phù và ngứa trong 24 giờ</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <Link to="/patient" className="base-btn-hero-primary">
               <span className="isax icon-arrow-left-2 text-sm"></span>
-              <span>Về Trang Chủ</span>
+              <span>Quay lại</span>
             </Link>
           </div>
         </div>
@@ -60,42 +53,39 @@ export default function Uas7Tracker() {
 
       {/* Module Grouped Sub-navigation */}
       <div className="flex items-center gap-2 border-b border-[var(--base-border-opaque)] pb-3">
-        <span className="text-xs font-bold text-[var(--base-content-disabled)] uppercase tracking-wider mr-2 hidden sm:inline">
-          Nhật ký điều trị:
-        </span>
         <div className="flex items-center gap-2">
           <Link
             to="/patient/uas7"
             className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[var(--base-brand-navy)] text-white shadow-2xs flex items-center gap-1.5"
           >
             <span className="isax-b icon-chart-21 text-sm"></span>
-            <span>1. Thang Đo UAS7 &amp; AAS7</span>
+            <span>Chấm điểm UAS7</span>
           </Link>
           <Link
             to="/patient/lesions"
             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[var(--base-content-secondary)] hover:bg-gray-100 hover:text-gray-900 transition flex items-center gap-1.5"
           >
             <span className="isax icon-camera text-sm"></span>
-            <span>2. Kho Ảnh Tổn Thương 3 Mốc</span>
+            <span>Ảnh tổn thương</span>
           </Link>
         </div>
       </div>
 
       {/* Tabs UAS7 vs AAS7 */}
-      <div className="base-tab-nav overflow-x-auto">
+      <div className="base-tab-nav">
         <button
           onClick={() => setActiveTab("uas7")}
           className={`base-tab-item ${activeTab === "uas7" ? "is-active" : ""}`}
         >
           <span className="isax icon-chart-21 text-base"></span>
-          <span>Phụ Lục A: Thang Đo Mày Đay (UAS7: 0–42đ)</span>
+          <span>Thang điểm UAS7</span>
         </button>
         <button
           onClick={() => setActiveTab("aas7")}
           className={`base-tab-item ${activeTab === "aas7" ? "is-active" : ""}`}
         >
-          <span className="isax icon-danger text-base text-[var(--base-warning-primary)]"></span>
-          <span>Phụ Lục B: Thang Đo Phù Mạch (AAS7)</span>
+          <span className="isax icon-danger text-base"></span>
+          <span>Thang điểm AAS7</span>
         </button>
       </div>
 
@@ -125,17 +115,17 @@ export default function Uas7Tracker() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-bold text-gray-900">
-                      1. Số lượng nốt sẩn phù (Hives Severity Score - HSS)
+                      1. Số lượng nốt sẩn (HSS)
                     </label>
                     <span className="text-xs font-mono font-bold text-[var(--base-brand-blue)]">{hss} / 3</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {[
-                      { val: 0, title: "0: Không có", desc: "Không xuất hiện nốt sẩn nào" },
-                      { val: 1, title: "1: Nhẹ", desc: "Dưới 20 nốt sẩn / 24 giờ" },
-                      { val: 2, title: "2: Vừa", desc: "Từ 20 đến 50 nốt sẩn / 24 giờ" },
-                      { val: 3, title: "3: Nặng", desc: "Trên 50 nốt hoặc các mảng lớn" },
+                      { val: 0, title: "0 - Không có", desc: "Không xuất hiện nốt sẩn" },
+                      { val: 1, title: "1 - Nhẹ", desc: "Dưới 20 nốt / 24 giờ" },
+                      { val: 2, title: "2 - Vừa", desc: "20 - 50 nốt / 24 giờ" },
+                      { val: 3, title: "3 - Nặng", desc: "Trên 50 nốt hoặc mảng lớn" },
                     ].map((opt) => (
                       <div
                         key={opt.val}
@@ -164,17 +154,17 @@ export default function Uas7Tracker() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-bold text-gray-900">
-                      2. Mức độ cảm giác ngứa (Itch Severity Score - ISS)
+                      2. Mức độ ngứa (ISS)
                     </label>
                     <span className="text-xs font-mono font-bold text-[var(--base-brand-blue)]">{iss} / 3</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {[
-                      { val: 0, title: "0: Không ngứa", desc: "Hoàn toàn dễ chịu" },
-                      { val: 1, title: "1: Ngứa nhẹ", desc: "Có cảm giác ngứa nhưng không gây phiền toái" },
-                      { val: 2, title: "2: Ngứa vừa", desc: "Gây khó chịu nhưng không ảnh hưởng sinh hoạt" },
-                      { val: 3, title: "3: Ngứa dữ dội", desc: "Rất khó chịu, ảnh hưởng giấc ngủ & sinh hoạt" },
+                      { val: 0, title: "0 - Không ngứa", desc: "Không có cảm giác ngứa" },
+                      { val: 1, title: "1 - Nhẹ", desc: "Ngứa nhẹ, không ảnh hưởng" },
+                      { val: 2, title: "2 - Vừa", desc: "Ngứa gây khó chịu" },
+                      { val: 3, title: "3 - Nặng", desc: "Ngứa dữ dội, cản trở sinh hoạt" },
                     ].map((opt) => (
                       <div
                         key={opt.val}

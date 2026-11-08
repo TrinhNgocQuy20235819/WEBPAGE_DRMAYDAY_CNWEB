@@ -45,12 +45,12 @@ export default function FormBuilder() {
             <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
               <Link to="/admin" className="hover:text-white transition">Quản trị</Link>
               <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Trình tạo biểu mẫu</span>
+              <span className="text-white/90 font-medium">Biểu mẫu</span>
             </div>
-            <h1 className="base-hero-title">Trình Thiết Kế Biểu Mẫu Y Tế Động 4 Tầng</h1>
+            <h1 className="base-hero-title">Thiết Kế Biểu Mẫu</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-document-text text-sm"></span>
-              <span>Cấu trúc chuẩn hóa: Mẫu phiếu → Phân mục → Câu hỏi → Lựa chọn theo đề tài cấp Bộ</span>
+              <span>Quản lý mẫu phiếu và bộ câu hỏi khám chuyên khoa</span>
             </p>
           </div>
           <div className="base-hero-actions">
@@ -59,14 +59,14 @@ export default function FormBuilder() {
               className="base-btn-hero-primary cursor-pointer text-xs"
             >
               <span className="isax icon-document-code text-sm"></span>
-              <span>Xem Cấu Trúc JSON</span>
+              <span>Xem JSON</span>
             </button>
             <button
               onClick={() => setShowAddQuestionModal(true)}
               className="base-btn-hero-accent cursor-pointer text-xs"
             >
               <span className="isax icon-add text-sm"></span>
-              <span>Thêm Câu Hỏi</span>
+              <span>Thêm câu hỏi</span>
             </button>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function FormBuilder() {
         <div className="lg:col-span-4 space-y-4">
           <div className="base-card p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-[var(--base-border-opaque)]">
-              <h2 className="text-xs font-bold text-gray-900 uppercase">Danh Sách Mẫu Phiếu</h2>
+              <h2 className="text-xs font-bold text-gray-900 uppercase">Mẫu phiếu</h2>
               <span className="base-tag base-tag-neutral font-mono text-[10px]">{templates.length}</span>
             </div>
 

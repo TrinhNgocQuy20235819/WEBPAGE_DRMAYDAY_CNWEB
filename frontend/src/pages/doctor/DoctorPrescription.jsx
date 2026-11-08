@@ -63,21 +63,16 @@ export default function DoctorPrescription() {
       <div className="base-hero">
         <div className="base-hero-content">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <Link to="/doctor" className="hover:text-white transition">Hàng đợi khám</Link>
-              <span className="isax icon-arrow-right-3 text-[10px]"></span>
-              <span className="text-white/90 font-medium">Khám lâm sàng &amp; Kê đơn</span>
-            </div>
-            <h1 className="base-hero-title">Thăm Khám &amp; Kê Đơn Điều Trị Mày Đay</h1>
+            <h1 className="base-hero-title">Khám &amp; Kê Đơn</h1>
             <p className="base-hero-subtitle">
               <span className="isax icon-health text-sm"></span>
-              <span>Chẩn đoán phân loại thể bệnh, đối chiếu tiến triển UAS7 và kê đơn thuốc điện tử</span>
+              <span>Chẩn đoán thể bệnh và kê đơn thuốc</span>
             </p>
           </div>
           <div className="base-hero-actions">
             <Link to="/doctor" className="base-btn-hero-primary">
               <span className="isax icon-arrow-left-2 text-sm"></span>
-              <span>Quay Lại Hàng Đợi</span>
+              <span>Quay lại</span>
             </Link>
           </div>
         </div>
@@ -136,27 +131,25 @@ export default function DoctorPrescription() {
                 <button
                   type="button"
                   onClick={() => setClinicalType("chronic")}
-                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer ${
+                  className={`py-2 px-3 rounded-lg border text-xs font-bold text-center transition-all cursor-pointer ${
                     clinicalType === "chronic"
                       ? "border-[var(--base-brand-blue)] bg-blue-50 text-[var(--base-brand-navy)] shadow-xs"
                       : "border-[var(--base-border-opaque)] text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  <span className="block font-bold">Mày Đay Mạn Tính (CSU)</span>
-                  <span className="text-[10px] text-gray-500 font-normal">Kéo dài &ge; 6 tuần liên tiếp</span>
+                  Mạn tính
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setClinicalType("acute")}
-                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer ${
+                  className={`py-2 px-3 rounded-lg border text-xs font-bold text-center transition-all cursor-pointer ${
                     clinicalType === "acute"
                       ? "border-[var(--base-brand-blue)] bg-blue-50 text-[var(--base-brand-navy)] shadow-xs"
                       : "border-[var(--base-border-opaque)] text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  <span className="block font-bold">Mày Đay Cấp Tính</span>
-                  <span className="text-[10px] text-gray-500 font-normal">Kéo dài &lt; 6 tuần</span>
+                  Cấp tính
                 </button>
               </div>
             </div>
@@ -232,10 +225,10 @@ export default function DoctorPrescription() {
               <button
                 type="button"
                 onClick={handleCompleteRecord}
-                className="base-btn base-btn-primary w-full py-3 font-bold justify-center cursor-pointer text-sm shadow-md"
+                className="base-btn base-btn-primary w-full py-2.5 font-bold justify-center cursor-pointer text-xs shadow-md"
               >
                 <span className="isax icon-shield-tick text-base"></span>
-                <span>Chốt Bệnh Án &amp; Ký Đơn Thuốc Điện Tử</span>
+                <span>Chốt bệnh án</span>
               </button>
             </div>
           </div>
@@ -247,7 +240,7 @@ export default function DoctorPrescription() {
         <div className="base-modal-backdrop">
           <div className="base-modal-dialog max-w-md w-full">
             <div className="base-modal-header">
-              <h3 className="base-modal-title">Thêm Thuốc Vào Đơn Điều Trị</h3>
+              <h3 className="base-modal-title">Thêm Thuốc Mới</h3>
               <button onClick={() => setShowAddDrug(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <span className="isax-b icon-close-circle text-xl"></span>
               </button>
