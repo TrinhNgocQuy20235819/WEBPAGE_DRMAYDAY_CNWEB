@@ -161,6 +161,8 @@ backend/*.log
 # =======================================================
 frontend/node_modules/
 backend-bac-si/node_modules/
+dist/
+**/dist/
 frontend/dist/
 frontend/dist-ssr/
 frontend/*.local

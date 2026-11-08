@@ -4,11 +4,11 @@
   "private": true,
   "description": "DrMayDay Complete Unified System - Quản trị, Bác sĩ, Bệnh nhân, Hạ tầng chung & AI (Embedded PostgreSQL + React Vite)",
   "scripts": {
-    "install:all": "npm --prefix backend-benh-nhan install && npm --prefix backend-bac-si install && npm --prefix frontend install",
+    "install:all": "npm --prefix frontend install && npm --prefix backend-benh-nhan install && npm --prefix backend-bac-si install",
     "start": "node server.js",
     "start:backend": "node server.js",
     "start:frontend": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build",
+    "build": "cd frontend && npm install && npm run build",
     "test": "npm run test:patient && npm run test:doctor && npm run test:e2e && npm run build",
     "test:patient": "npm --prefix backend-benh-nhan run test:all",
     "test:doctor": "npm --prefix backend-bac-si test",
