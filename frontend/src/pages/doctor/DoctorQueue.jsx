@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { INITIAL_RECORDS } from "../../services/mockData";
+import Pagination from "../../components/common/Pagination";
 
 export default function DoctorQueue() {
   const navigate = useNavigate();
   const [records, setRecords] = useState(INITIAL_RECORDS);
   const [filter, setFilter] = useState("all"); // 'all', 'pending', 'in_progress', 'completed'
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPatient, setNewPatient] = useState({
     name: "",
@@ -17,6 +20,16 @@ export default function DoctorQueue() {
     clinical_type: "chronic",
   });
 
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+
   const filtered = records.filter((r) => {
     const matchFilter = filter === "all" ? true : r.status === filter;
     const matchSearch =
@@ -25,6 +38,9 @@ export default function DoctorQueue() {
       r.patient_phone.includes(search);
     return matchFilter && matchSearch;
   });
+
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginatedRecords = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleAssignToMe = (id) => {
     setRecords(
@@ -75,7 +91,7 @@ export default function DoctorQueue() {
         <div className="base-hero-content">
           <div>
             <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
-              <span className="text-white/70">Phân hệ Bác sĩ</span>
+              <span className="text-white/70">Lâm sàng &amp; Khám bệnh</span>
               <span className="isax icon-arrow-right-3 text-[10px]"></span>
               <span className="text-white/90 font-medium">Hàng đợi khám lâm sàng</span>
             </div>
@@ -91,7 +107,7 @@ export default function DoctorQueue() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Tìm tên, SĐT, mã BA..."
                 className="pl-8 pr-3 py-1.5 rounded-lg text-xs bg-white/15 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40 w-48 sm:w-56"
               />
@@ -107,39 +123,39 @@ export default function DoctorQueue() {
         </div>
       </div>
 
-      {/* Primary Line Tabs */}
+      {/* Primary Line Tabs (Phân nhóm trạng thái ca khám) */}
       <div className="base-tab-nav overflow-x-auto">
         <button
-          onClick={() => setFilter("all")}
+          onClick={() => handleFilterChange("all")}
           className={`base-tab-item ${filter === "all" ? "is-active" : ""}`}
         >
           <span className="isax icon-document-text text-base"></span>
           <span>Tất Cả Ca Khám ({records.length})</span>
         </button>
         <button
-          onClick={() => setFilter("pending")}
+          onClick={() => handleFilterChange("pending")}
           className={`base-tab-item ${filter === "pending" ? "is-active" : ""}`}
         >
-          <span className="isax icon-clock text-base"></span>
+          <span className="isax icon-clock text-base text-amber-600"></span>
           <span>1. Chờ Tiếp Nhận ({records.filter((r) => r.status === "pending").length})</span>
         </button>
         <button
-          onClick={() => setFilter("in_progress")}
+          onClick={() => handleFilterChange("in_progress")}
           className={`base-tab-item ${filter === "in_progress" ? "is-active" : ""}`}
         >
-          <span className="isax icon-health text-base"></span>
+          <span className="isax icon-health text-base text-[var(--base-brand-blue)]"></span>
           <span>2. Đang Khám ({records.filter((r) => r.status === "in_progress").length})</span>
         </button>
         <button
-          onClick={() => setFilter("completed")}
+          onClick={() => handleFilterChange("completed")}
           className={`base-tab-item ${filter === "completed" ? "is-active" : ""}`}
         >
-          <span className="isax icon-tick-circle text-base"></span>
+          <span className="isax icon-tick-circle text-base text-[var(--base-positive-primary)]"></span>
           <span>3. Đã Hoàn Tất ({records.filter((r) => r.status === "completed").length})</span>
         </button>
       </div>
 
-      {/* Bảng danh sách hàng đợi (Invoika Standard Table) */}
+      {/* Bảng danh sách hàng đợi (Invoika Standard Table với Phân Trang) */}
       <div className="base-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="base-table">
@@ -155,67 +171,90 @@ export default function DoctorQueue() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id}>
-                  <td className="font-mono font-bold text-xs text-[var(--base-brand-navy)]">
-                    {r.record_code}
-                  </td>
-                  <td>
-                    <div className="font-bold text-xs text-gray-900">{r.patient_name}</div>
-                    <div className="font-mono text-[11px] text-gray-500">{r.patient_phone}</div>
-                  </td>
-                  <td>
-                    {r.clinical_type === "chronic" ? (
-                      <span className="base-tag base-tag-info font-bold text-[10px]">
-                        Mạn tính (&ge;6 tuần)
-                      </span>
-                    ) : (
-                      <span className="base-tag base-tag-warning font-bold text-[10px]">
-                        Cấp tính (&lt;6 tuần)
-                      </span>
-                    )}
-                  </td>
-                  <td className="text-xs text-gray-600">{r.room_name}</td>
-                  <td className="text-xs font-semibold text-gray-800">
-                    {r.assigned_doctor_name}
-                  </td>
-                  <td>
-                    <span
-                      className={`base-tag text-[10px] ${
-                        r.status === "completed"
-                          ? "base-tag-positive"
-                          : r.status === "in_progress"
-                          ? "base-tag-info"
-                          : "base-tag-warning"
-                      }`}
-                    >
-                      {r.status === "completed" ? "Đã chốt bệnh án" : r.status === "in_progress" ? "Đang khám" : "Chờ tiếp nhận"}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    {r.status === "pending" ? (
-                      <button
-                        onClick={() => handleAssignToMe(r.id)}
-                        className="base-btn base-btn-primary base-btn-compact text-xs cursor-pointer"
+              {paginatedRecords.length > 0 ? (
+                paginatedRecords.map((r) => (
+                  <tr key={r.id}>
+                    <td className="font-mono font-bold text-xs text-[var(--base-brand-navy)]">
+                      {r.record_code}
+                    </td>
+                    <td>
+                      <div className="font-bold text-xs text-gray-900">{r.patient_name}</div>
+                      <div className="font-mono text-[11px] text-gray-500">{r.patient_phone}</div>
+                    </td>
+                    <td>
+                      {r.clinical_type === "chronic" ? (
+                        <span className="base-tag base-tag-info font-bold text-[10px]">
+                          Mạn tính (&ge;6 tuần)
+                        </span>
+                      ) : (
+                        <span className="base-tag base-tag-warning font-bold text-[10px]">
+                          Cấp tính (&lt;6 tuần)
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-xs text-gray-600">{r.room_name}</td>
+                    <td className="text-xs font-semibold text-gray-800">
+                      {r.assigned_doctor_name}
+                    </td>
+                    <td>
+                      <span
+                        className={`base-tag text-[10px] ${
+                          r.status === "completed"
+                            ? "base-tag-positive"
+                            : r.status === "in_progress"
+                            ? "base-tag-info"
+                            : "base-tag-warning"
+                        }`}
                       >
-                        <span className="isax icon-user-tick text-xs"></span>
-                        <span>Nhận Ca Khám</span>
-                      </button>
-                    ) : (
-                      <Link
-                        to="/doctor/prescriptions"
-                        className="base-btn base-btn-secondary base-btn-compact text-xs"
-                      >
-                        <span className="isax icon-health text-xs"></span>
-                        <span>Xem Bệnh Án</span>
-                      </Link>
-                    )}
+                        {r.status === "completed" ? "Đã chốt bệnh án" : r.status === "in_progress" ? "Đang khám" : "Chờ tiếp nhận"}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      {r.status === "pending" ? (
+                        <button
+                          onClick={() => handleAssignToMe(r.id)}
+                          className="base-btn base-btn-primary base-btn-compact text-xs cursor-pointer"
+                        >
+                          <span className="isax icon-user-tick text-xs"></span>
+                          <span>Nhận Ca Khám</span>
+                        </button>
+                      ) : (
+                        <Link
+                          to="/doctor/prescriptions"
+                          className="base-btn base-btn-secondary base-btn-compact text-xs"
+                        >
+                          <span className="isax icon-health text-xs"></span>
+                          <span>Xem Bệnh Án</span>
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-gray-400 text-xs">
+                    <span className="isax icon-document text-3xl block mb-2 text-gray-300"></span>
+                    Không tìm thấy ca khám nào phù hợp với bộ lọc hiện tại.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Reusable Standard Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          pageSizeOptions={[5, 10, 20]}
+        />
       </div>
 
       {/* Modal Tiếp nhận BN mới */}

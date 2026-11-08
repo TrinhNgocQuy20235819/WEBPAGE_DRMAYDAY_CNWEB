@@ -11,16 +11,22 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const navItems = [
-    { name: "Bảng Điều Khiển Quản Trị", path: "/admin", icon: "icon-element-plus" },
-    { name: "Cơ Sở & Hạ Tầng Y Tế", path: "/admin/topology", icon: "icon-buildings" },
-    { name: "Danh Bạ Nhân Sự Y Tế", path: "/admin/users", icon: "icon-profile-2user" },
-    { name: "Bộ Tạo Mẫu Phiếu Khám", path: "/admin/form-builder", icon: "icon-document-text" },
+  const overviewNav = [
+    { name: "Bảng Điều Khiển Chỉ Số", path: "/admin", icon: "icon-element-plus" },
+  ];
+
+  const organizationNav = [
+    { name: "Hạ Tầng Cơ Sở Y Tế", path: "/admin/topology", icon: "icon-buildings", badge: "3 Cấp" },
+  ];
+
+  const clinicalOpsNav = [
+    { name: "Danh Bạ Nhân Sự & Quyền", path: "/admin/users", icon: "icon-profile-2user" },
+    { name: "Trình Tạo Biểu Mẫu Khám", path: "/admin/form-builder", icon: "icon-document-text", badge: "4 Tầng" },
   ];
 
   return (
     <div className="flex h-screen bg-white font-sans antialiased overflow-hidden">
-      {/* Sidebar (Uber Base Standard) */}
+      {/* Sidebar (Uber Base Standard with Categorized Domains) */}
       <aside className="w-[280px] bg-white border-r border-[var(--base-border-opaque)] flex flex-col justify-between shrink-0 z-20">
         <div>
           {/* Logo Header */}
@@ -31,8 +37,8 @@ export default function AdminLayout() {
                 alt="DrMayDay - Bệnh viện Da liễu Trung ương"
                 className="h-10 w-auto object-contain"
                 onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
                 }}
               />
               <div className="hidden h-10 px-3 rounded-lg bg-[var(--base-brand-navy)] text-white font-bold items-center text-sm">
@@ -41,34 +47,102 @@ export default function AdminLayout() {
             </Link>
           </div>
 
-          {/* Nav Section Label */}
-          <div className="px-5 pt-5 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
-            Danh mục quản trị
-          </div>
+          <div className="p-3 space-y-5">
+            {/* 1. Tổng quan */}
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+                Tổng quan &amp; Điều hành
+              </div>
+              <nav className="space-y-1">
+                {overviewNav.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === "/admin"}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`isax ${item.icon} text-base`}></span>
+                      <span>{item.name}</span>
+                    </div>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
 
-          {/* Navigation Links */}
-          <nav className="px-3 space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === "/admin"}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                    isActive
-                      ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                      : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
-                  }`
-                }
-              >
-                <span className={`isax ${item.icon} text-lg`}></span>
-                <span>{item.name}</span>
-              </NavLink>
-            ))}
-          </nav>
+            {/* 2. Hạ tầng tổ chức */}
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+                Cơ cấu tổ chức y tế
+              </div>
+              <nav className="space-y-1">
+                {organizationNav.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`isax ${item.icon} text-base`}></span>
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-[var(--base-brand-blue)]">
+                        {item.badge}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+
+            {/* 3. Nghiệp vụ chuyên môn */}
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+                Nghiệp vụ lâm sàng &amp; Dữ liệu
+              </div>
+              <nav className="space-y-1">
+                {clinicalOpsNav.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`isax ${item.icon} text-base`}></span>
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-[var(--base-brand-blue)]">
+                        {item.badge}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          </div>
         </div>
 
-        {/* User Info & Logout */}
+        {/* User Info & Logout Footer */}
         <div className="p-4 border-t border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -97,7 +171,7 @@ export default function AdminLayout() {
         <header className="h-16 border-b border-[var(--base-border-opaque)] bg-white px-6 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 text-xs text-[var(--base-content-secondary)]">
             <span className="isax icon-hospital text-sm text-[var(--base-brand-blue)]"></span>
-            <span className="font-medium">Bệnh viện Da liễu Trung ương</span>
+            <span className="font-semibold text-gray-900">Bệnh viện Da liễu Trung ương</span>
             <span>•</span>
             <span>Cổng Quản Trị Hệ Thống DrMayDay</span>
           </div>
@@ -109,7 +183,7 @@ export default function AdminLayout() {
               title="Chuyển sang phân hệ Bác sĩ"
             >
               <span className="isax icon-user-tick text-xs"></span>
-              <span>Giao diện Bác sĩ</span>
+              <span>Bác Sĩ</span>
             </Link>
             <Link
               to="/patient"
@@ -117,7 +191,7 @@ export default function AdminLayout() {
               title="Chuyển sang phân hệ Bệnh nhân"
             >
               <span className="isax icon-home-2 text-xs"></span>
-              <span>Giao diện BN</span>
+              <span>Bệnh Nhân</span>
             </Link>
           </div>
         </header>

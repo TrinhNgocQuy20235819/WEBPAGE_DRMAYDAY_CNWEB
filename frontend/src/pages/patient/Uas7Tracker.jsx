@@ -39,6 +39,8 @@ export default function Uas7Tracker() {
             <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
               <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
               <span className="isax icon-arrow-right-3 text-[10px]"></span>
+              <span className="text-white/70">Nhật ký điều trị</span>
+              <span className="isax icon-arrow-right-3 text-[10px]"></span>
               <span className="text-white/90 font-medium">Chấm điểm hoạt tính</span>
             </div>
             <h1 className="base-hero-title">Nhật Ký Chấm Điểm UAS7 Hằng Ngày</h1>
@@ -53,6 +55,29 @@ export default function Uas7Tracker() {
               <span>Về Trang Chủ</span>
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Module Grouped Sub-navigation */}
+      <div className="flex items-center gap-2 border-b border-[var(--base-border-opaque)] pb-3">
+        <span className="text-xs font-bold text-[var(--base-content-disabled)] uppercase tracking-wider mr-2 hidden sm:inline">
+          Nhật ký điều trị:
+        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/patient/uas7"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[var(--base-brand-navy)] text-white shadow-2xs flex items-center gap-1.5"
+          >
+            <span className="isax-b icon-chart-21 text-sm"></span>
+            <span>1. Thang Đo UAS7 &amp; AAS7</span>
+          </Link>
+          <Link
+            to="/patient/lesions"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[var(--base-content-secondary)] hover:bg-gray-100 hover:text-gray-900 transition flex items-center gap-1.5"
+          >
+            <span className="isax icon-camera text-sm"></span>
+            <span>2. Kho Ảnh Tổn Thương 3 Mốc</span>
+          </Link>
         </div>
       </div>
 

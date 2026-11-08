@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { INITIAL_RECORDS } from "../services/mockData";
 
 export default function DoctorLayout() {
   const navigate = useNavigate();
@@ -11,15 +12,34 @@ export default function DoctorLayout() {
     navigate("/login");
   };
 
-  const navItems = [
-    { name: "Hàng Đợi Ca Khám (Queue)", path: "/doctor", icon: "icon-clock" },
-    { name: "Khám & Kê Đơn Điện Tử", path: "/doctor/prescriptions", icon: "icon-health" },
-    { name: "Đối Chiếu Ảnh Tổn Thương", path: "/doctor/lesions", icon: "icon-camera" },
+  const pendingCount = INITIAL_RECORDS.filter((r) => r.status === "pending").length;
+
+  const clinicalNav = [
+    {
+      name: "Hàng Đợi Khám Bệnh",
+      path: "/doctor",
+      icon: "icon-clock",
+      badge: `${pendingCount} chờ`,
+      badgeColor: "bg-amber-100 text-amber-800",
+    },
+    {
+      name: "Thăm Khám & Kê Đơn",
+      path: "/doctor/prescriptions",
+      icon: "icon-health",
+    },
+  ];
+
+  const diagnosticNav = [
+    {
+      name: "Đối Chiếu Ảnh Tổn Thương",
+      path: "/doctor/lesions",
+      icon: "icon-camera",
+    },
   ];
 
   return (
     <div className="flex h-screen bg-white font-sans antialiased overflow-hidden">
-      {/* Sidebar Bác Sĩ (Uber Base White Canvas) */}
+      {/* Sidebar Bác Sĩ (Uber Base White Canvas with Grouped Categories) */}
       <aside className="w-[280px] bg-white border-r border-[var(--base-border-opaque)] flex flex-col justify-between shrink-0 z-20">
         <div>
           {/* Logo Header */}
@@ -30,8 +50,8 @@ export default function DoctorLayout() {
                 alt="DrMayDay - Bác sĩ Lâm sàng"
                 className="h-10 w-auto object-contain"
                 onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
                 }}
               />
               <div className="hidden h-10 px-3 rounded-lg bg-[var(--base-brand-navy)] text-white font-bold items-center text-sm">
@@ -40,32 +60,70 @@ export default function DoctorLayout() {
             </Link>
           </div>
 
-          <div className="px-5 pt-5 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
-            Phân hệ Bác sĩ
-          </div>
+          <div className="p-3 space-y-5">
+            {/* Group 1: Khám chữa bệnh */}
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+                Lâm sàng &amp; Khám bệnh
+              </div>
+              <nav className="space-y-1">
+                {clinicalNav.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === "/doctor"}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`isax ${item.icon} text-base`}></span>
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${item.badgeColor}`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
 
-          <nav className="px-3 space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === "/doctor"}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                    isActive
-                      ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                      : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
-                  }`
-                }
-              >
-                <span className={`isax ${item.icon} text-lg`}></span>
-                <span>{item.name}</span>
-              </NavLink>
-            ))}
-          </nav>
+            {/* Group 2: Chẩn đoán & Tư liệu */}
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+                Tư liệu lâm sàng
+              </div>
+              <nav className="space-y-1">
+                {diagnosticNav.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`isax ${item.icon} text-base`}></span>
+                      <span>{item.name}</span>
+                    </div>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          </div>
         </div>
 
-        {/* Doctor Info & Logout */}
+        {/* Doctor Info & Logout Footer */}
         <div className="p-4 border-t border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -74,7 +132,7 @@ export default function DoctorLayout() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[var(--base-content-primary)] truncate">TS.BS. Nguyễn Văn Hùng</p>
-                <span className="base-role-badge base-role-badge-doctor text-[9px]">Bác sĩ phụ trách</span>
+                <span className="base-role-badge base-role-badge-doctor text-[9px]">Khoa Miễn Dịch Da Liễu</span>
               </div>
             </div>
             <button
@@ -90,30 +148,36 @@ export default function DoctorLayout() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Top Clinician Header */}
         <header className="h-16 border-b border-[var(--base-border-opaque)] bg-white px-6 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 text-xs text-[var(--base-content-secondary)]">
             <span className="isax icon-health text-sm text-[var(--base-brand-blue)]"></span>
-            <span className="font-medium">Phòng Khám 302 • Chuyên Khoa Mày Đay & Miễn Dịch Da Liễu</span>
+            <span className="font-semibold text-gray-900">Phòng Khám 302</span>
+            <span>•</span>
+            <span>Chuyên Khoa Mày Đay &amp; Miễn Dịch Lâm Sàng</span>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin"
               className="base-btn base-btn-secondary base-btn-compact text-xs"
+              title="Chuyển sang Cổng Quản Trị"
             >
               <span className="isax icon-element-plus text-xs"></span>
-              <span>Cổng Quản Trị</span>
+              <span>Quản Trị</span>
             </Link>
             <Link
               to="/patient"
               className="base-btn base-btn-secondary base-btn-compact text-xs"
+              title="Chuyển sang Cổng Bệnh Nhân"
             >
               <span className="isax icon-home-2 text-xs"></span>
-              <span>Giao diện BN</span>
+              <span>Bệnh Nhân</span>
             </Link>
           </div>
         </header>
 
+        {/* Clinician Compact Viewport */}
         <main className="flex-1 overflow-y-auto p-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <Outlet />
