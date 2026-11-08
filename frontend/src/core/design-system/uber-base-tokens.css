@@ -836,6 +836,52 @@ button:hover .icon-arrow-right,
   border-bottom-color: var(--base-accent-500);
 }
 
+/* --- SIDEBAR NAVIGATION ITEM (Uber Base Standard with Thin Bottom Line & Circular Blue Notification Badge) --- */
+.base-sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--base-radius-300);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-content-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-decoration: none;
+  cursor: pointer;
+}
+.base-sidebar-link:hover {
+  background: var(--base-bg-secondary);
+  color: var(--base-content-primary);
+}
+.base-sidebar-link.is-active,
+.base-sidebar-link.active {
+  background: rgba(59, 99, 168, 0.08);
+  color: var(--base-brand-navy);
+  font-weight: 700;
+  border-bottom: 2px solid var(--base-brand-blue);
+  border-left: none !important;
+}
+
+/* Circular Blue Notification Count Badge (Tinh gọn số thông báo) */
+.base-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: var(--base-brand-blue);
+  color: var(--base-primitive-white);
+  font-family: var(--base-font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(59, 99, 168, 0.25);
+}
+
 /* Compact Line Tab */
 .base-tab-nav-compact .base-tab-item,
 .base-tab-item-compact {

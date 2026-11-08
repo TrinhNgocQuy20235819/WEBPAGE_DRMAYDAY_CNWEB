@@ -118,10 +118,10 @@ export default function PatientLayout() {
                     to={item.path}
                     end={item.path === "/patient"}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border-b-2 ${
                         isActive
-                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                          ? "bg-[rgba(59,99,168,0.08)] text-[var(--base-brand-navy)] font-bold border-[var(--base-brand-blue)]"
+                          : "border-transparent text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
                       }`
                     }
                   >
@@ -145,10 +145,10 @@ export default function PatientLayout() {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border-b-2 ${
                         isActive
-                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                          ? "bg-[rgba(59,99,168,0.08)] text-[var(--base-brand-navy)] font-bold border-[var(--base-brand-blue)]"
+                          : "border-transparent text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
                       }`
                     }
                   >
@@ -172,10 +172,10 @@ export default function PatientLayout() {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border-b-2 ${
                         isActive
-                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                          ? "bg-[rgba(59,99,168,0.08)] text-[var(--base-brand-navy)] font-bold border-[var(--base-brand-blue)]"
+                          : "border-transparent text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
                       }`
                     }
                   >
@@ -199,10 +199,10 @@ export default function PatientLayout() {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all border ${
+                      `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all border-b-2 ${
                         isActive
-                          ? "bg-rose-100 border-rose-400 text-rose-900 border-l-4 shadow-xs"
-                          : "bg-rose-50/60 border-rose-200 text-rose-700 hover:bg-rose-100/80"
+                          ? "bg-rose-100/80 text-rose-900 border-rose-500 shadow-2xs font-bold"
+                          : "border-transparent bg-rose-50/60 text-rose-700 hover:bg-rose-100/70"
                       }`
                     }
                   >
@@ -210,7 +210,9 @@ export default function PatientLayout() {
                       <span className="isax-b icon-danger text-base text-rose-600 animate-pulse"></span>
                       <span>{item.name}</span>
                     </div>
-                    <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping"></span>
+                    <span className="h-5 min-w-[20px] px-1 rounded-full bg-rose-600 text-white font-mono text-[10px] font-bold flex items-center justify-center">
+                      !
+                    </span>
                   </NavLink>
                 ))}
               </nav>

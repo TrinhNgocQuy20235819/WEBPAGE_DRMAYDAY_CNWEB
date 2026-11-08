@@ -47,8 +47,7 @@ export default function DoctorLayout() {
       name: "Hàng Đợi Khám Bệnh",
       path: "/doctor",
       icon: "icon-clock",
-      badge: `${pendingCount} chờ`,
-      badgeColor: "bg-amber-100 text-amber-800",
+      badge: pendingCount,
     },
     {
       name: "Thăm Khám & Kê Đơn",
@@ -122,10 +121,10 @@ export default function DoctorLayout() {
                     to={item.path}
                     end={item.path === "/doctor"}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border-b-2 ${
                         isActive
-                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                          ? "bg-[rgba(59,99,168,0.08)] text-[var(--base-brand-navy)] font-bold border-[var(--base-brand-blue)]"
+                          : "border-transparent text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
                       }`
                     }
                   >
@@ -133,8 +132,8 @@ export default function DoctorLayout() {
                       <span className={`isax ${item.icon} text-base`}></span>
                       <span>{item.name}</span>
                     </div>
-                    {item.badge && (
-                      <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${item.badgeColor}`}>
+                    {item.badge !== undefined && item.badge !== null && (
+                      <span className="base-nav-badge">
                         {item.badge}
                       </span>
                     )}
@@ -154,10 +153,10 @@ export default function DoctorLayout() {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border-b-2 ${
                         isActive
-                          ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
-                          : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                          ? "bg-[rgba(59,99,168,0.08)] text-[var(--base-brand-navy)] font-bold border-[var(--base-brand-blue)]"
+                          : "border-transparent text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
                       }`
                     }
                   >
