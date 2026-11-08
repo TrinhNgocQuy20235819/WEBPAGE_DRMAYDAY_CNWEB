@@ -1240,23 +1240,33 @@ button:hover .icon-arrow-right,
    premium micro-interactions & typography rhythm enhancements
    ========================================================================== */
 
-/* --- HERO GRADIENT BANNER (Brand Navy deep to Blue) --- */
+/* --- HERO GRADIENT BANNER (Tràn viền Edge-to-Edge, Welcoming Healthcare Gradient) --- */
 .base-hero {
   position: relative;
   overflow: hidden;
-  border-radius: var(--base-radius-400);
-  background: linear-gradient(135deg, var(--base-brand-navy) 0%, #152d75 55%, #1e3d8f 100%);
-  padding: 28px 32px;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  margin-top: -1.5rem;
+  margin-bottom: 1.75rem;
+  border-radius: 0;
+  background: linear-gradient(135deg, var(--base-brand-navy) 0%, #122864 45%, #1d3f8a 100%);
+  padding: 32px 36px;
   color: var(--base-primitive-white);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px -2px rgba(9, 31, 91, 0.08);
 }
 .base-hero::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 80% at 85% 20%, rgba(111,150,209,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 10% 90%, rgba(186,214,235,0.10) 0%, transparent 55%);
+    radial-gradient(ellipse 65% 85% at 85% 15%, rgba(111,150,209,0.25) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 65% at 15% 90%, rgba(186,214,235,0.12) 0%, transparent 55%);
   pointer-events: none;
+}
+.base-hero.base-hero-boxed {
+  margin: 0 0 1.5rem 0;
+  border-radius: var(--base-radius-400);
 }
 .base-hero-content {
   position: relative;
