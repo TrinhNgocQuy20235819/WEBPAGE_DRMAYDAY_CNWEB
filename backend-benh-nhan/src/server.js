@@ -15,6 +15,7 @@ const multer = require('multer');
 const { initDatabase } = require('./config/database');
 const { RESPONSE_CODES, sendResponse } = require('./config/responseCodes');
 const patientRoutes = require('./routes/patientRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -37,9 +38,11 @@ app.get(['/api/v1/health', '/api/health'], (_req, res) => {
   });
 });
 
-// Gắn toàn bộ tuyến đường API của Phân hệ Bệnh nhân vào cả /api/v1 và /api
+// Gắn toàn bộ tuyến đường API của Phân hệ Bệnh nhân và Phân hệ Admin vào cả /api/v1 và /api
 app.use('/api/v1', patientRoutes);
 app.use('/api', patientRoutes);
+app.use('/api/v1', adminRoutes);
+app.use('/api', adminRoutes);
 
 // ============================================================================
 // XỬ LÝ ROUTE KHÔNG TỒN TẠI (404) & MIDDLEWARE BẮT LỖI TOÀN CỤC

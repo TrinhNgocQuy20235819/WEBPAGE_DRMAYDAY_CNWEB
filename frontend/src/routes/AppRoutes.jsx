@@ -22,6 +22,7 @@ import FormBuilder from "../pages/admin/FormBuilder";
 import DoctorQueue from "../pages/doctor/DoctorQueue";
 import DoctorPrescription from "../pages/doctor/DoctorPrescription";
 import DoctorLesionReview from "../pages/doctor/DoctorLesionReview";
+import DoctorLabRequests from "../pages/doctor/DoctorLabRequests";
 
 // Patient Pages
 import PatientDashboard from "../pages/patient/PatientDashboard";
@@ -29,12 +30,16 @@ import Uas7Tracker from "../pages/patient/Uas7Tracker";
 import ScreeningForm from "../pages/patient/ScreeningForm";
 import LesionTracker from "../pages/patient/LesionTracker";
 import PatientProfile from "../pages/patient/PatientProfile";
+import EmergencyTriage from "../pages/patient/EmergencyTriage";
 
 export default function AppRoutes() {
   return (
     <Routes>
       {/* Root redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Public Emergency Triage (< 30s Red Alert) */}
+      <Route path="/emergency-triage" element={<EmergencyTriage />} />
 
       {/* Auth Routes */}
       <Route element={<AuthLayout />}>
@@ -56,6 +61,7 @@ export default function AppRoutes() {
         <Route index element={<DoctorQueue />} />
         <Route path="prescriptions" element={<DoctorPrescription />} />
         <Route path="lesions" element={<DoctorLesionReview />} />
+        <Route path="lab-requests" element={<DoctorLabRequests />} />
       </Route>
 
       {/* Patient Module Routes (Đầu việc 2) */}

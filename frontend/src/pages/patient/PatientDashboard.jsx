@@ -61,7 +61,7 @@ export default function PatientDashboard() {
             </p>
           </div>
         </div>
-        <Link to="/patient/screening" className="base-btn base-btn-compact base-btn-primary shrink-0 self-start sm:self-auto text-xs">
+        <Link to="/emergency-triage" className="base-btn base-btn-compact base-btn-primary shrink-0 self-start sm:self-auto text-xs">
           <span>Báo động đỏ</span>
           <span className="isax icon-arrow-right-1 text-xs"></span>
         </Link>

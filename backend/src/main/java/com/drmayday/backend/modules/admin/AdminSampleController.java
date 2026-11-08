@@ -20,7 +20,10 @@ public class AdminSampleController {
         return ApiResponse.success(Map.of(
                 "module", "Admin & Dynamic Form Builder",
                 "assignedTo", "Đầu việc 1",
-                "status", "Ready for development"
+                "slide3", "User Management & RBAC - Operational (15 APIs)",
+                "slide4", "Topology Infrastructure - Operational (15 APIs)",
+                "slide11", "Dynamic Form Builder - Operational (11 APIs)",
+                "status", "Completed"
         ));
     }
 }

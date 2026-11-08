@@ -1,2 +1,50 @@
 @import "tailwindcss";
 @import "./core/design-system/uber-base-tokens.css";
+
+/* ==========================================================================
+   DESIGN SYSTEM ENFORCEMENT (Uber Base Design System & DrMayDay Rules)
+   - border-radius: 0 on all cards, containers, inputs, tables, tags, modals
+   - border lines (1px solid border) are preserved
+   - border-radius: 8px EXCLUSIVELY on interactive buttons
+   - Circular badges (.base-nav-badge, avatars) retain circular shape
+   ========================================================================== */
+
+/* 1. Structural Containers & Form Inputs: 0px Border Radius */
+.base-card,
+.base-stat-card,
+.base-table-container,
+.base-table,
+.base-modal-content,
+.base-input,
+.base-select,
+.base-textarea,
+.base-input-group,
+.base-tag,
+.base-alert,
+.base-hero,
+.base-panel,
+.base-sidebar-link,
+.base-sidebar-link-danger,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border-radius: 0 !important;
+}
+
+/* 2. Interactive Action Buttons: 8px Border Radius */
+.base-btn,
+.base-btn-primary,
+.base-btn-secondary,
+.base-btn-tertiary,
+.base-btn-danger,
+.base-btn-hero-primary,
+.base-btn-hero-accent,
+button.base-btn,
+a.base-btn {
+  border-radius: 8px !important;
+}
+
+/* 3. Circular Micro-Indicators */
+.base-nav-badge {
+  border-radius: 9999px !important;
+}

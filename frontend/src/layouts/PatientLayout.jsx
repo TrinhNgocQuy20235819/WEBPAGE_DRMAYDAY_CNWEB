@@ -46,6 +46,7 @@ export default function PatientLayout() {
   const diaryNav = [
     { name: "Chấm Điểm UAS7 & AAS7", path: "/patient/uas7", icon: "icon-chart-21" },
     { name: "Kho Ảnh Tổn Thương 3 Mốc", path: "/patient/lesions", icon: "icon-camera" },
+    { name: "Khảo Sát Lâm Sàng", path: "/patient/screening", icon: "icon-clipboard-text" },
   ];
 
   const medicalRecordNav = [
@@ -54,8 +55,8 @@ export default function PatientLayout() {
 
   const emergencyNav = [
     {
-      name: "Sàng Lọc Báo Động (<30s)",
-      path: "/patient/screening",
+      name: "Sàng Lọc Báo Động",
+      path: "/emergency-triage",
       icon: "icon-danger",
       isEmergency: true,
     },

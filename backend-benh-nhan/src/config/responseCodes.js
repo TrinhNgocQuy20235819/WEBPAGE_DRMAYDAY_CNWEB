@@ -32,6 +32,15 @@ const RESPONSE_CODES = {
   DOCTOR_ROLE_REQUIRED: { code: '3103', message: 'Doctor role required', httpStatus: 403 },
   DOCTOR_NOT_ASSIGNED: { code: '3105', message: 'Doctor not assigned to this record', httpStatus: 403 },
   FORBIDDEN_OTHER_USER_DATA: { code: '3106', message: "Cannot access another user's data", httpStatus: 403 },
+  ROLE_NOT_FOUND: { code: '3201', message: 'Role not found', httpStatus: 404 },
+  ROLE_NAME_EXISTS: { code: '3202', message: 'Role name already exists', httpStatus: 409 },
+  PERMISSION_NOT_FOUND: { code: '3203', message: 'Permission not found', httpStatus: 404 },
+  PERMISSION_NAME_EXISTS: { code: '3204', message: 'Permission name already exists', httpStatus: 409 },
+  BRANCH_NOT_FOUND: { code: '3301', message: 'Branch not found', httpStatus: 404 },
+  BRANCH_IN_USE: { code: '3302', message: 'Cannot delete branch with active departments or assigned staff', httpStatus: 400 },
+  DEPARTMENT_NOT_FOUND: { code: '3303', message: 'Department not found', httpStatus: 404 },
+  ROOM_NOT_FOUND: { code: '3304', message: 'Room not found', httpStatus: 404 },
+  ROOM_IN_USE: { code: '3305', message: 'Cannot delete room with assigned staff', httpStatus: 400 },
 
   // 4xxx: Lỗi Hồ sơ Bệnh án & Biểu mẫu động (Medical Records & Templates)
   MEDICAL_RECORD_NOT_FOUND: { code: '4001', message: 'Medical record not found', httpStatus: 404 },
@@ -41,6 +50,10 @@ const RESPONSE_CODES = {
   ALREADY_ACCEPTED: { code: '4005', message: 'Already accepted by another doctor', httpStatus: 409 },
   CLASSIFY_INCOMPLETE: { code: '4006', message: 'Classification options incomplete', httpStatus: 400 },
   TEMPLATE_NOT_FOUND: { code: '4101', message: 'Template not found', httpStatus: 404 },
+  TEMPLATE_CODE_EXISTS: { code: '4102', message: 'Template code already exists', httpStatus: 409 },
+  SECTION_NOT_FOUND: { code: '4103', message: 'Section not found', httpStatus: 404 },
+  QUESTION_NOT_FOUND: { code: '4104', message: 'Question not found', httpStatus: 404 },
+  TEMPLATE_IN_USE: { code: '4105', message: 'Template in use cannot be deleted', httpStatus: 400 },
 
   // 5xxx: Lỗi Thang điểm UAS7 / AAS (UAS7 Scoring)
   UAS7_ALREADY_SUBMITTED: { code: '5002', message: 'Score for date already submitted', httpStatus: 409 },

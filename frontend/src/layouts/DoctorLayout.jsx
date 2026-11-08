@@ -54,6 +54,11 @@ export default function DoctorLayout() {
       path: "/doctor/prescriptions",
       icon: "icon-health",
     },
+    {
+      name: "Chỉ Định Xét Nghiệm",
+      path: "/doctor/lab-requests",
+      icon: "icon-clipboard-text",
+    },
   ];
 
   const diagnosticNav = [
