@@ -29,9 +29,11 @@ if errorlevel 1 (
 )
 
 if not exist "%PROJECT_ROOT%mayday-database\final_restructured.sql" (
-    echo [LOI] Khong tim thay mayday-database\final_restructured.sql.
-    pause
-    exit /b 1
+    if not exist "%PROJECT_ROOT%docs\final_restructured.sql" (
+        echo [LOI] Khong tim thay final_restructured.sql trong mayday-database hoac docs.
+        pause
+        exit /b 1
+    )
 )
 
 if not exist "%PROJECT_ROOT%backend\mvnw.cmd" (

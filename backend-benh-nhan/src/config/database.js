@@ -32,11 +32,17 @@ async function initDatabase() {
   }
 
   const useEmbedded = String(process.env.USE_EMBEDDED_PG || 'true').toLowerCase() === 'true';
-  const sqlSchemaPath = path.resolve(
+  let sqlSchemaPath = path.resolve(
     __dirname,
     '../../',
     process.env.SQL_SCHEMA_PATH || '../mayday-database/final_restructured.sql'
   );
+  if (!fs.existsSync(sqlSchemaPath)) {
+    const docsSchema = path.resolve(__dirname, '../../docs/final_restructured.sql');
+    if (fs.existsSync(docsSchema)) {
+      sqlSchemaPath = docsSchema;
+    }
+  }
 
   if (!useEmbedded && process.env.DATABASE_URL) {
     try {

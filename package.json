@@ -1,0 +1,26 @@
+{
+  "name": "drmayday-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DrMayDay - Hệ thống Quản lý Bệnh án Điện tử và Hỗ trợ Chẩn đoán, Điều trị Bệnh Mề đay",
+  "scripts": {
+    "install:all": "npm --prefix backend-benh-nhan install && npm --prefix backend-bac-si install && npm --prefix frontend install",
+    "build": "npm --prefix frontend run build",
+    "test": "npm run test:patient && npm run test:doctor && npm run build",
+    "test:patient": "npm --prefix backend-benh-nhan run test:all",
+    "test:doctor": "npm --prefix backend-bac-si test",
+    "test:frontend": "npm --prefix frontend run build",
+    "start:patient": "npm --prefix backend-benh-nhan start",
+    "start:doctor": "npm --prefix backend-bac-si start",
+    "start:frontend": "npm --prefix frontend run dev"
+  },
+  "keywords": [
+    "drmayday",
+    "urticaria",
+    "medical-records",
+    "uas7",
+    "aas7"
+  ],
+  "author": "DrMayDay Team",
+  "license": "ISC"
+}

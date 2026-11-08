@@ -1,15 +1,16 @@
 const { Pool } = require('pg');
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is required. Point this service to the shared PostgreSQL database.');
-}
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/drmayday';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 5000)
 });
 
 async function initDatabase() {
+  if (!process.env.DATABASE_URL) {
+    console.warn('[DoctorBackend] DATABASE_URL chưa được cấu hình, dùng mặc định:', databaseUrl);
+  }
   await pool.query('SELECT 1');
   const result = await pool.query("SELECT to_regclass('public.hosobenhan') AS medical_record_table");
   if (!result.rows[0]?.medical_record_table) {

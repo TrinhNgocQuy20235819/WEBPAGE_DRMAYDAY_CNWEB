@@ -5,7 +5,8 @@
   "description": "Independent Doctor API service for DrMayDay",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node tests/test_doctor_api.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
