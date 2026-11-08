@@ -1,0 +1,38 @@
+meta {
+  name: 02 Photo AI Inference Mock
+  type: http
+  seq: 2
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/inference
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Returns valid hives_count (non-negative integer) and omits local_auas", function () {
+    expect(body.data.hives_count).to.be.a("number");
+    expect(body.data.hives_count).to.be.at.least(0);
+    expect(Number.isInteger(body.data.hives_count)).to.be.true;
+    expect(body.data).to.not.have.property("local_auas");
+    bru.setVar("expectedHivesCount", body.data.hives_count);
+  });
+  test("Contains timings and model metadata; annotation is optional", function () {
+    if (body.data.annotated_url != null) {
+      expect(body.data.annotated_url).to.be.a("string").and.not.empty;
+    }
+    expect(body.data.timings).to.exist;
+    expect(body.data.timings.total_ms).to.be.a("number");
+    expect(body.data.model_name).to.be.a("string");
+  });
+}

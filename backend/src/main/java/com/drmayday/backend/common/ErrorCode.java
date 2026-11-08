@@ -62,17 +62,37 @@ public enum ErrorCode {
     MEDIA_FILE_MISSING(6001, "Media file is required", HttpStatus.BAD_REQUEST),
     MEDIA_FILE_TOO_LARGE(6003, "Media file size exceeds limit (5MB)", HttpStatus.PAYLOAD_TOO_LARGE),
 
-    // 7000 - 7999: Lesion Tracking Errors (Slide 9)
+    // 7000 - 7999: Lesion Tracking & AI Inference
+    AI_PROVIDER_CAPABILITY_BLOCKED(7106, "BLOCKED_BY_PROVIDER_CAPABILITY: configured model does not support image inference", HttpStatus.SERVICE_UNAVAILABLE),
+    AI_PROVIDER_AUTH_FAILED(7107, "AI provider authentication failed", HttpStatus.BAD_GATEWAY),
+    AI_PROVIDER_RATE_LIMITED(7108, "AI provider rate limited", HttpStatus.SERVICE_UNAVAILABLE),
     LESION_EPISODE_NOT_FOUND(7001, "Lesion episode not found", HttpStatus.NOT_FOUND),
-    LESION_LOCATION_NOT_FOUND(7002, "Lesion location not found", HttpStatus.NOT_FOUND),
-    LESION_PHOTO_NOT_FOUND(7003, "Lesion photo not found", HttpStatus.NOT_FOUND),
+    LESION_PHOTO_NOT_FOUND(7002, "Lesion photo not found", HttpStatus.NOT_FOUND),
+    LESION_LOCATION_NOT_FOUND(7003, "Lesion location not found", HttpStatus.NOT_FOUND),
+    LESION_NAME_EMPTY(7004, "Lesion name cannot be empty", HttpStatus.BAD_REQUEST),
+    BODY_PART_EMPTY(7005, "Body part cannot be empty", HttpStatus.BAD_REQUEST),
+    INVALID_MILESTONE(7006, "Invalid milestone value", HttpStatus.BAD_REQUEST),
+    SYMPTOM_SCORE_OUT_OF_RANGE(7007, "Symptom score out of range", HttpStatus.BAD_REQUEST),
+    AI_INFERENCE_FAILED(7101, "AI inference service failed", HttpStatus.BAD_GATEWAY),
+    AI_INFERENCE_TIMEOUT(7102, "AI inference service timeout", HttpStatus.GATEWAY_TIMEOUT),
+    AI_INFERENCE_INVALID_RESPONSE(7103, "AI inference returned invalid response", HttpStatus.BAD_GATEWAY),
+    AI_SERVICE_UNAVAILABLE(7104, "AI inference service unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 
-    // 8000 - 8999: Prescriptions & Lab Requests Errors (Slide 7)
+    // 8000 - 8999: Prescriptions & Lab Requests Errors
     PRESCRIPTION_ITEMS_EMPTY(8001, "Prescription items list cannot be empty", HttpStatus.BAD_REQUEST),
     PRESCRIPTION_ITEM_MISSING_DRUG_NAME(8002, "Drug name is required for all items", HttpStatus.BAD_REQUEST),
     LAB_REQUEST_ITEMS_EMPTY(8101, "Lab request items list cannot be empty", HttpStatus.BAD_REQUEST),
 
-    // 9000 - 9999: Notifications & System Errors (Slide 10)
+    UNAUTHENTICATED(3008, "Phien dang nhap khong hop le hoac da het han", HttpStatus.UNAUTHORIZED),
+    ACCESS_DENIED(3102, "Ban khong co quyen truy cap chuc nang nay", HttpStatus.FORBIDDEN),
+    RBAC_NOT_FOUND(3201, "Role or permission not found", HttpStatus.NOT_FOUND),
+    RBAC_CONFLICT(3202, "Role or permission already exists or is in use", HttpStatus.CONFLICT),
+    ENDPOINT_NOT_FOUND(2005, "Endpoint not found", HttpStatus.NOT_FOUND),
+    METHOD_NOT_ALLOWED(2006, "HTTP method not allowed", HttpStatus.METHOD_NOT_ALLOWED),
+    UNSUPPORTED_MEDIA(2007, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    SECURITY_UNAVAILABLE(9901, "Security service unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
+    // 9000 - 9999: Notifications & System Errors
     FCM_TOKEN_MISSING(9101, "FCM token is required", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND(9102, "Notification not found or access denied", HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized system error", HttpStatus.INTERNAL_SERVER_ERROR);

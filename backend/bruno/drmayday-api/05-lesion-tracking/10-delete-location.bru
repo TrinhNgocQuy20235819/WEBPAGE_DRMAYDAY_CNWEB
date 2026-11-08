@@ -1,0 +1,24 @@
+meta {
+  name: 10 Delete Lesion Location
+  type: http
+  seq: 10
+  tags: [automated, lesion-ai]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/lesion-locations/{{createdLocationId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+}
+

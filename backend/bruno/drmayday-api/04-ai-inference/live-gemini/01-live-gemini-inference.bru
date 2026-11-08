@@ -1,0 +1,59 @@
+meta {
+  name: 01 Live Gemini Vision AI Inference
+  type: http
+  seq: 1
+  tags: [gemini, ai-inference]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/ai/inference
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "attachment_id": {{createdAttachmentId}}
+  }
+}
+
+script:pre-request {
+  const key = bru.getVar("geminiApiKey") || bru.getEnvVar("geminiApiKey");
+  if (!key) {
+    console.log("GEMINI_API_KEY not configured. Skipping live inference.");
+  }
+}
+
+tests {
+  const key = bru.getVar("geminiApiKey") || bru.getEnvVar("geminiApiKey");
+  if (key) {
+    const status = res.getStatus();
+    const body = res.getBody();
+    console.log("BRUNO LIVE CALL STATUS: " + status);
+    console.log("BRUNO LIVE CALL CODE: " + (body ? body.code : null));
+    console.log("BRUNO LIVE CALL MESSAGE: " + (body ? body.message : null));
+
+    test("HTTP 200 (valid hives_count) or HTTP 502/7103 if image wheals cannot be determined", function () {
+      expect([200, 502]).to.include(status);
+      if (status === 200) {
+        expect(body.code).to.equal(1000);
+        expect(body.data.hives_count).to.be.a("number");
+        expect(Number.isInteger(body.data.hives_count)).to.be.true;
+        expect(body.data.hives_count).to.be.at.least(0);
+        expect(body.data).to.not.have.property("local_auas");
+        expect(body.data.is_mock).to.be.false;
+        expect(body.data.model_name).to.match(/^gemini-2\.5-flash/);
+      } else {
+        expect(body.code).to.equal(7103);
+      }
+    });
+  }
+}

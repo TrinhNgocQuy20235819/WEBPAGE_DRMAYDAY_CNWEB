@@ -1,0 +1,47 @@
+meta {
+  name: 01 Patient Login Success
+  type: http
+  seq: 1
+  tags: [automated]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"phone": "{{patientPhone}}", "password": "{{patientPassword}}"}
+}
+
+script:pre-request {
+  req.setBody({"phone": (bru.getVar("patientPhone") || bru.getEnvVar("patientPhone")), "password": (bru.getVar("patientPassword") || bru.getEnvVar("patientPassword"))});
+  if (!(bru.getVar("patientPhone") || bru.getEnvVar("patientPhone")) || !(bru.getVar("patientPassword") || bru.getEnvVar("patientPassword"))) throw new Error("Enter patient credentials as local/secret variables");
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+    expect(body.message).to.equal("OK");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+  test("JWT and safe user", function () {
+    expect(body.data.accessToken).to.be.a("string").and.not.empty;
+    expect(body.data.tokenType).to.equal("Bearer");
+    expect(body.data.user.accountId).to.be.a("number");
+  });
+  if (res.getStatus() === 200) { bru.setVar("patientTokenA", body.data.accessToken);
+    bru.setVar("patientToken", body.data.accessToken); }
+}

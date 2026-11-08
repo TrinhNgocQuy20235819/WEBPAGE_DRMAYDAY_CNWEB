@@ -1,0 +1,41 @@
+meta {
+  name: 02 Invalid Attachment Format (2007)
+  type: http
+  seq: 2
+  tags: [automated, ai-inference]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/ai/inference
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "attachment_id": {{invalidFormatAttachmentId}}
+  }
+}
+
+script:pre-request {
+  if (!bru.getVar("invalidFormatAttachmentId")) {
+    bru.setVar("invalidFormatAttachmentId", 99904);
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 415 and ErrorCode 2007 (UNSUPPORTED_MEDIA)", function () {
+    expect(res.getStatus()).to.equal(415);
+    expect(body.code).to.equal(2007);
+    expect(body.message).to.equal("Unsupported media type");
+  });
+}

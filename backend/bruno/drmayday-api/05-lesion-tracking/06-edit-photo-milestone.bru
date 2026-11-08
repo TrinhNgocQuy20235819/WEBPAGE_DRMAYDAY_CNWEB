@@ -1,0 +1,44 @@
+meta {
+  name: 06 Edit Photo Milestone
+  type: http
+  seq: 6
+  tags: [automated, lesion-ai]
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}/milestone
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "milestone": "peak",
+    "itch_score": 7,
+    "pain_score": 4,
+    "burn_score": 3
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+  test("Milestone and scores updated correctly", function () {
+    expect(body.data.milestone).to.equal("peak");
+    expect(body.data.itch_score).to.equal(7);
+    expect(body.data.pain_score).to.equal(4);
+    expect(body.data.burn_score).to.equal(3);
+  });
+}
+

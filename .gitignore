@@ -150,6 +150,7 @@ core.*
 # =======================================================
 # 10. Backend Build & Logs (Spring Boot / Maven)
 # =======================================================
+*.class
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/logs/
@@ -191,6 +192,20 @@ extracted_themeal/
 from hospital/
 .agents/
 GEMINI.md
-
-
 mayday-database/
+
+/docs/reports/
+
+# Local runtime secrets and artifacts
+/.local/
+
+# Private Bruno environments
+/backend/bruno/**/environments/*.private.bru
+/backend/bruno/**/environments/*.local.bru
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+doctor-hash.txt
+

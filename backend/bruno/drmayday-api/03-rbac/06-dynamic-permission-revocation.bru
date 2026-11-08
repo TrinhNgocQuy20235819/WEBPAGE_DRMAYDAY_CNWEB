@@ -1,0 +1,64 @@
+meta {
+  name: 06 Dynamic Permission Check
+  type: http
+  seq: 6
+  tags: [manual]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{adminToken}}
+}
+
+script:pre-request {
+  if ((bru.getVar("runManual") || bru.getEnvVar("runManual")) !== "true") {
+    if (req.getExecutionMode() === "standalone") throw new Error("Set runManual=true after preparing the manual fixture");
+    bru.runner.skipRequest();
+  }
+  else {
+    if (!(bru.getVar("adminToken") || bru.getEnvVar("adminToken"))) throw new Error("Missing adminToken; run the prerequisite login or prepare the manual fixture.");
+    try {
+      if (typeof require === "function") {
+        require("child_process").execSync(
+          'docker exec drmayday-security-test-postgres-1 psql -U mayday_test -d mayday_security_test -c "DELETE FROM vaitroquyenhan WHERE ma_vai_tro = 7 AND ma_quyen_han = 1;"'
+        );
+      }
+    } catch (e) {}
+  }
+}
+
+script:post-response {
+  if ((bru.getVar("runManual") || bru.getEnvVar("runManual")) === "true") {
+    try {
+      if (typeof require === "function") {
+        require("child_process").execSync(
+          'docker exec drmayday-security-test-postgres-1 psql -U mayday_test -d mayday_security_test -c "INSERT INTO vaitroquyenhan (ma_vai_tro, ma_quyen_han) VALUES (7, 1) ON CONFLICT DO NOTHING;"'
+        );
+      }
+    } catch (e) {}
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 403 and ApiResponse 3102", function () {
+    expect(res.getStatus()).to.equal(403);
+    expect(body.code).to.equal(3102);
+    expect(body.message).to.equal("Ban khong co quyen truy cap chuc nang nay");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}
+
+docs {
+  User removes required admin-ping permission from the target role on a dedicated test DB. Keep this exact adminToken; do not change the actor own role via RBAC API.
+}

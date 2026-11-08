@@ -1,0 +1,51 @@
+meta {
+  name: 05 Create Lesion Photo
+  type: http
+  seq: 5
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-photos
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "episode_id": {{createdEpisodeId}},
+    "location_id": {{createdLocationId}},
+    "attachment_id": {{createdAttachmentId}},
+    "taken_at": "2026-11-01T20:30:00Z",
+    "milestone": "start",
+    "itch_score": 4,
+    "pain_score": 2,
+    "burn_score": 1
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 201 and ApiResponse 1001", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(body.code).to.equal(1001);
+  });
+  test("Photo created with valid ID", function () {
+    expect(body.data).to.have.property("photo_id");
+    expect(body.data.milestone).to.equal("start");
+    expect(body.data.itch_score).to.equal(4);
+    expect(body.data.attachment).to.exist;
+    expect(body.data.attachment.filename).to.equal("test_lesion_arm.jpg");
+  });
+  if (res.getStatus() === 201 && body.data && body.data.photo_id) {
+    bru.setVar("createdPhotoId", body.data.photo_id);
+  }
+}

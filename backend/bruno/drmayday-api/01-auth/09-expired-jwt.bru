@@ -1,0 +1,46 @@
+meta {
+  name: 09 Expired JWT Rejected
+  type: http
+  seq: 9
+  tags: [manual]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/shared/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{expiredToken}}
+}
+
+script:pre-request {
+  if ((bru.getVar("runManual") || bru.getEnvVar("runManual")) !== "true") {
+    if (req.getExecutionMode() === "standalone") throw new Error("Set runManual=true after preparing the manual fixture");
+    bru.runner.skipRequest();
+  }
+  else {
+  if (!(bru.getVar("expiredToken") || bru.getEnvVar("expiredToken"))) throw new Error("Missing expiredToken; run the prerequisite login or prepare the manual fixture.");
+  
+  }
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 401 and ApiResponse 3008", function () {
+    expect(res.getStatus()).to.equal(401);
+    expect(body.code).to.equal(3008);
+    expect(body.message).to.equal("Phien dang nhap khong hop le hoac da het han");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}
+
+docs {
+  Capture a real test token, allow it to expire, then set expiredToken and runManual=true. Do not use a blank or fabricated token.
+}

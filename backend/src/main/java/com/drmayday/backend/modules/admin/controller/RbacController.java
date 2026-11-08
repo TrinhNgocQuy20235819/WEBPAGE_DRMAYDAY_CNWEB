@@ -7,19 +7,23 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
+@RestController("slide3RbacController")
 @RequestMapping("/api/v1")
-@RequiredArgsConstructor
 @Tag(name = "1. Slide 3: RBAC & Permissions", description = "Quản lý Vai trò (Roles), Quyền hạn (Permissions) và Cấp/Thu hồi quyền")
 public class RbacController {
 
     private final RbacService rbacService;
+
+    public RbacController(@Qualifier("slide3RbacService") RbacService rbacService) {
+        this.rbacService = rbacService;
+    }
 
     // ==========================================
     // 1. QUẢN LÝ VAI TRÒ (ROLES)

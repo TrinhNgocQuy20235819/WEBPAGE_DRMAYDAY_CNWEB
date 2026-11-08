@@ -1,0 +1,35 @@
+meta {
+  name: 03 Patient Forbidden Admin Ping
+  type: http
+  seq: 3
+  tags: [automated]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/ping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{patientToken}}
+}
+
+script:pre-request {
+  if (!(bru.getVar("patientToken") || bru.getEnvVar("patientToken"))) throw new Error("Missing patientToken; run the prerequisite login or prepare the manual fixture.");
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 403 and ApiResponse 3102", function () {
+    expect(res.getStatus()).to.equal(403);
+    expect(body.code).to.equal(3102);
+    expect(body.message).to.equal("Ban khong co quyen truy cap chuc nang nay");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+}

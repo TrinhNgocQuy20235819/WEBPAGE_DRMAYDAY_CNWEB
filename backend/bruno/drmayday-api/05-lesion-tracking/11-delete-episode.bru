@@ -1,0 +1,24 @@
+meta {
+  name: 11 Delete Lesion Episode
+  type: http
+  seq: 11
+  tags: [automated, lesion-ai]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/lesion-episodes/{{createdEpisodeId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+}
+

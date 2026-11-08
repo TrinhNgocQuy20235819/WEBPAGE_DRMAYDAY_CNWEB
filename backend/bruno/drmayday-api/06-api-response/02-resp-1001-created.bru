@@ -1,0 +1,47 @@
+meta {
+  name: 02 ApiResponse 1001 Created
+  type: http
+  seq: 2
+  tags: [automated]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-episodes
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{patientToken}}
+}
+
+body:json {
+  {
+    "medical_record_id": {{medicalRecordId}},
+    "name": "Kiem thu ApiResponse 1001 Created",
+    "occurred_at": "2026-03-29T08:00:00Z"
+  }
+}
+
+script:pre-request {
+  const token = bru.getVar("patientToken") || bru.getEnvVar("patientToken") || bru.getVar("patientTokenB") || bru.getEnvVar("patientTokenB");
+  if (!token) throw new Error("Missing patientToken; run the prerequisite login first.");
+  bru.setVar("patientToken", token);
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 201 and ApiResponse 1001", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(body.code).to.equal(1001);
+    expect(body.message).to.equal("Created successfully");
+  });
+  test("No sensitive error/user fields", function () {
+    const text = JSON.stringify(body);
+    expect(text).not.to.match(/matKhauMaHoa|mat_khau_ma_hoa|stackTrace|jdbc:postgresql|jwt\.secret/i);
+    expect(body).not.to.have.property("password");
+    if (body.data && body.data.user) expect(body.data.user).not.to.have.property("password");
+  });
+  test("data present", function () { expect(body.data).to.be.an("object"); });
+}

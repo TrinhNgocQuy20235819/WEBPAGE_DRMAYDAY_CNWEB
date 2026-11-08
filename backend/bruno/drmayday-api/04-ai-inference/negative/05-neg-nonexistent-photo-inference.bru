@@ -1,0 +1,25 @@
+meta {
+  name: 05 Nonexistent Photo Inference (7002)
+  type: http
+  seq: 5
+  tags: [automated, lesion-ai]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/lesion-photos/999999/inference
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 404 and ErrorCode 7002 (LESION_PHOTO_NOT_FOUND)", function () {
+    expect(res.getStatus()).to.equal(404);
+    expect(body.code).to.equal(7002);
+    expect(body.message).to.equal("Lesion photo not found");
+  });
+}
+

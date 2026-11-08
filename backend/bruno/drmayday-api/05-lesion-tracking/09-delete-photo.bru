@@ -1,0 +1,24 @@
+meta {
+  name: 09 Delete Lesion Photo
+  type: http
+  seq: 9
+  tags: [automated, lesion-ai]
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/lesion-photos/{{createdPhotoId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{patientToken}}
+}
+
+tests {
+  const body = res.getBody();
+  test("HTTP 200 and ApiResponse 1000", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(body.code).to.equal(1000);
+  });
+}
+

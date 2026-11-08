@@ -1,0 +1,19 @@
+script:pre-request {
+  // Guard against accidental execution on non-test environments
+  const allow = bru.getVar("allowTestRequests") || bru.getEnvVar("allowTestRequests");
+  if (String(allow) !== "true") {
+    throw new Error("Set allowTestRequests=true only after selecting a dedicated test backend/DB/Redis.");
+  }
+  // Secrets remain process/runtime variables; never persist them in environments.
+  for (const name of ["patientPassword", "adminPassword", "patientBPassword", "lockedPassword"]) {
+    const value = bru.getProcessEnv("TEST_" + name.toUpperCase()) || bru.getProcessEnv("AI_TEST_" + name);
+    if (value && !bru.getVar(name)) {
+      bru.setVar(name, value);
+    }
+  }
+  const geminiKey = bru.getProcessEnv("GEMINI_API_KEY");
+  if (geminiKey && !bru.getVar("geminiApiKey")) {
+    bru.setVar("geminiApiKey", geminiKey);
+  }
+}
+

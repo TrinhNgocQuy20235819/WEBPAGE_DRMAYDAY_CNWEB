@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
+@Service("slide3RbacService")
 @RequiredArgsConstructor
 public class RbacService {
 
