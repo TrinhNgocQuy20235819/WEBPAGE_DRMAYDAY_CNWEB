@@ -85,8 +85,8 @@ async function signup(req, res) {
   try {
     const body = req.body || {};
     const fullName = (body.full_name || body.ffull_name || body.ho_ten || '').trim();
-    const phone = (body.phone || body.so_dien_thoai || '').trim();
-    const password = body.password || '';
+    const phone = (body.phone || body.so_dien_thoai || body.ten_dang_nhap || '').trim();
+    const password = body.password || body.mat_khau || '';
     const genderInput = body.gender || body.gioi_tinh || null;
     const yearOfBirth = body.year_of_birth;
     const dateOfBirth = body.date_of_birth || body.ngay_sinh || null;
@@ -215,8 +215,8 @@ async function signup(req, res) {
 async function login(req, res) {
   try {
     const body = req.body || {};
-    const phone = (body.phone || body.ten_dang_nhap || '').trim();
-    const password = body.password || '';
+    const phone = (body.phone || body.ten_dang_nhap || body.so_dien_thoai || '').trim();
+    const password = body.password || body.mat_khau || '';
 
     if (!phone || !password) {
       return sendResponse(res, RESPONSE_CODES.MISSING_PARAM);

@@ -7,6 +7,7 @@
  * Kiểm tra 50 kịch bản bao phủ 100% các Test Cases thành công và mã lỗi nghiệp vụ quy định trong Slide.
  */
 
+process.env.USE_EMBEDDED_PG = 'true';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');

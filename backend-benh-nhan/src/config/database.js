@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { PGlite } = require('@electric-sql/pglite');
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 let pgPool = null;
 let pgliteInstance = null;

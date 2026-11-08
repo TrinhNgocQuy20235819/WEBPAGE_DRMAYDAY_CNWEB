@@ -18,9 +18,12 @@ const { state, saveStore } = require('../config/runtimeStore');
 function formatDateYMD(val) {
   if (!val) return null;
   if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-  const d = new Date(val);
+  const d = val instanceof Date ? val : new Date(val);
   if (isNaN(d.getTime())) return String(val);
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**

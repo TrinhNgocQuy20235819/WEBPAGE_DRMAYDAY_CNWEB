@@ -16,6 +16,7 @@
  *    Kiểm tra khóa chỉnh sửa khi bệnh án đã Hoàn thành (`4003 Medical record already completed`).
  */
 
+process.env.USE_EMBEDDED_PG = 'true';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
