@@ -1,5 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Stethoscope, Clock, FilePlus2, Images, LogOut } from "lucide-react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 export default function DoctorLayout() {
@@ -13,77 +12,112 @@ export default function DoctorLayout() {
   };
 
   const navItems = [
-    { name: "Hàng đợi khám (Queue)", path: "/doctor", icon: Clock },
-    { name: "Kê đơn & Cận lâm sàng", path: "/doctor/prescriptions", icon: FilePlus2 },
-    { name: "Đối chiếu Ảnh tổn thương", path: "/doctor/lesions", icon: Images },
+    { name: "Hàng Đợi Ca Khám (Queue)", path: "/doctor", icon: "icon-clock" },
+    { name: "Khám & Kê Đơn Điện Tử", path: "/doctor/prescriptions", icon: "icon-health" },
+    { name: "Đối Chiếu Ảnh Tổn Thương", path: "/doctor/lesions", icon: "icon-camera" },
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
-      {/* Sidebar Bác sĩ */}
-      <aside className="w-64 bg-teal-950 text-slate-100 flex flex-col justify-between shadow-xl">
+    <div className="flex h-screen bg-white font-sans antialiased overflow-hidden">
+      {/* Sidebar Bác Sĩ (Uber Base White Canvas) */}
+      <aside className="w-[280px] bg-white border-r border-[var(--base-border-opaque)] flex flex-col justify-between shrink-0 z-20">
         <div>
-          <div className="p-6 border-b border-teal-900 flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center font-bold text-white shadow-md">
-              <Stethoscope size={22} />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg leading-tight">DrMayDay</h1>
-              <p className="text-xs text-teal-300 font-medium">Bác Sĩ Lâm Sàng</p>
-            </div>
+          {/* Logo Header */}
+          <div className="p-6 border-b border-[var(--base-border-opaque)] flex items-center justify-between">
+            <Link to="/doctor" className="flex items-center gap-3">
+              <img
+                src="/images/logo/drmayday-logo.png"
+                alt="DrMayDay - Bác sĩ Lâm sàng"
+                className="h-10 w-auto object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="hidden h-10 px-3 rounded-lg bg-[var(--base-brand-navy)] text-white font-bold items-center text-sm">
+                DrMayDay Doctor
+              </div>
+            </Link>
           </div>
 
-          <nav className="p-4 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === "/doctor"}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                      isActive
-                        ? "bg-teal-600 text-white shadow"
-                        : "text-teal-200 hover:bg-teal-900 hover:text-white"
-                    }`
-                  }
-                >
-                  <Icon size={18} />
-                  <span>{item.name}</span>
-                </NavLink>
-              );
-            })}
+          <div className="px-5 pt-5 pb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--base-content-disabled)]">
+            Phân hệ Bác sĩ
+          </div>
+
+          <nav className="px-3 space-y-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === "/doctor"}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                    isActive
+                      ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-l-4 border-[var(--base-brand-blue)]"
+                      : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                  }`
+                }
+              >
+                <span className={`isax ${item.icon} text-lg`}></span>
+                <span>{item.name}</span>
+              </NavLink>
+            ))}
           </nav>
         </div>
 
-        <div className="p-4 border-t border-teal-900">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-teal-900/60 text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition-colors"
-          >
-            <LogOut size={16} />
-            <span>Đăng xuất</span>
-          </button>
+        {/* Doctor Info & Logout */}
+        <div className="p-4 border-t border-[var(--base-border-opaque)] bg-[var(--base-bg-surface-alt)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-9 w-9 rounded-lg bg-[var(--base-brand-blue)] text-white font-bold flex items-center justify-center text-xs shrink-0">
+                BS
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-[var(--base-content-primary)] truncate">TS.BS. Nguyễn Văn Hùng</p>
+                <span className="base-role-badge base-role-badge-doctor text-[9px]">Bác sĩ phụ trách</span>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất"
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-[var(--base-negative-primary)] hover:bg-[var(--base-negative-tint)] transition cursor-pointer"
+            >
+              <span className="isax icon-logout text-base"></span>
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shadow-sm">
-          <div className="text-sm font-medium text-slate-500">
-            Phân hệ Khám lâm sàng Bác sĩ (Đầu việc 3)
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="h-16 border-b border-[var(--base-border-opaque)] bg-white px-6 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-2 text-xs text-[var(--base-content-secondary)]">
+            <span className="isax icon-health text-sm text-[var(--base-brand-blue)]"></span>
+            <span className="font-medium">Phòng Khám 302 • Chuyên Khoa Mày Đay & Miễn Dịch Da Liễu</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-slate-700 font-medium">BS. Nguyễn Văn A</span>
-            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center font-bold text-teal-800 text-xs">
-              BS
-            </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin"
+              className="base-btn base-btn-secondary base-btn-compact text-xs"
+            >
+              <span className="isax icon-element-plus text-xs"></span>
+              <span>Cổng Quản Trị</span>
+            </Link>
+            <Link
+              to="/patient"
+              className="base-btn base-btn-secondary base-btn-compact text-xs"
+            >
+              <span className="isax icon-home-2 text-xs"></span>
+              <span>Giao diện BN</span>
+            </Link>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-8">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto p-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

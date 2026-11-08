@@ -180,3 +180,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# =======================================================
+# 13. Local Scratch, Extraction & Reference Artifacts
+# =======================================================
+admin_template/
+Slide APIs/
+extracted_themeal/
+from hospital/
+.agents/
+GEMINI.md
+

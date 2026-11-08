@@ -1,5 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Activity, ClipboardList, Camera, User, LogOut, HeartPulse } from "lucide-react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 export default function PatientLayout() {
@@ -13,65 +12,101 @@ export default function PatientLayout() {
   };
 
   const navItems = [
-    { name: "Tổng quan", path: "/patient", icon: HeartPulse },
-    { name: "Chấm điểm UAS7", path: "/patient/uas7", icon: Activity },
-    { name: "Phiếu sàng lọc", path: "/patient/screening", icon: ClipboardList },
-    { name: "Theo dõi tổn thương", path: "/patient/lesions", icon: Camera },
-    { name: "Hồ sơ y tế / BHYT", path: "/patient/profile", icon: User },
+    { name: "Trang Chủ", path: "/patient", icon: "icon-home-2" },
+    { name: "Chấm Điểm UAS7", path: "/patient/uas7", icon: "icon-chart" },
+    { name: "Sàng Lọc Báo Động (<30s)", path: "/patient/screening", icon: "icon-danger", alert: true },
+    { name: "Tổn Thương Da 3 Mốc", path: "/patient/lesions", icon: "icon-camera" },
+    { name: "Hồ Sơ Y Tế & BHYT", path: "/patient/profile", icon: "icon-user" },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Navigation Bar cho Bệnh nhân */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-gray-900">
+      {/* Top Navigation Bar cho Bệnh Nhân (Uber Base Clean White) */}
+      <header className="bg-white border-b border-[var(--base-border-opaque)] sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-md">
-              MD
+          {/* Logo */}
+          <Link to="/patient" className="flex items-center gap-3">
+            <img
+              src="/images/logo/drmayday-logo.png"
+              alt="DrMayDay - Bệnh viện Da liễu Trung ương"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden h-10 px-3 rounded-lg bg-[var(--base-brand-navy)] text-white font-bold items-center text-sm">
+              DrMayDay
             </div>
-            <div>
-              <span className="font-bold text-lg text-slate-900 leading-none block">DrMayDay</span>
-              <span className="text-xs text-indigo-600 font-medium">Theo dõi Mề đay & Khám bệnh</span>
-            </div>
-          </div>
+          </Link>
 
-          <nav className="hidden md:flex space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === "/patient"}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-indigo-50 text-indigo-700 font-semibold"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`
-                  }
-                >
-                  <Icon size={16} />
-                  <span>{item.name}</span>
-                </NavLink>
-              );
-            })}
+          {/* Nav Tabs */}
+          <nav className="hidden lg:flex items-center space-x-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === "/patient"}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    isActive
+                      ? "bg-[rgba(59,99,168,0.12)] text-[var(--base-brand-navy)] font-bold border-b-2 border-[var(--base-brand-blue)]"
+                      : item.alert
+                      ? "text-[var(--base-negative-primary)] hover:bg-[var(--base-negative-tint)]"
+                      : "text-[var(--base-content-secondary)] hover:bg-[var(--base-bg-secondary)] hover:text-[var(--base-content-primary)]"
+                  }`
+                }
+              >
+                <span className={`isax ${item.icon} text-base ${item.alert ? "text-[var(--base-negative-primary)] font-bold" : ""}`}></span>
+                <span>{item.name}</span>
+              </NavLink>
+            ))}
           </nav>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
-          >
-            <LogOut size={14} />
-            <span>Đăng xuất</span>
-          </button>
+          {/* User badge & Actions */}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 pr-3 border-r border-[var(--base-border-opaque)]">
+              <div className="h-8 w-8 rounded-lg bg-[var(--base-gray-900)] text-white font-bold flex items-center justify-center text-xs">
+                M
+              </div>
+              <div className="text-left text-xs">
+                <p className="font-bold text-[var(--base-content-primary)] leading-none">Nguyễn Thị Mai</p>
+                <span className="base-role-badge base-role-badge-patient text-[9px] mt-0.5">Bệnh nhân</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/doctor"
+                className="base-btn base-btn-secondary base-btn-compact text-xs"
+                title="Xem giao diện Bác sĩ"
+              >
+                <span className="isax icon-health text-xs"></span>
+                <span className="hidden sm:inline">Bác sĩ</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="base-btn base-btn-secondary base-btn-compact text-xs text-[var(--base-negative-primary)] hover:bg-[var(--base-negative-tint)]"
+                title="Đăng xuất"
+              >
+                <span className="isax icon-logout text-xs"></span>
+                <span className="hidden sm:inline">Thoát</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Container on Pure White Canvas */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
         <Outlet />
       </main>
+
+      {/* Medical Footer */}
+      <footer className="border-t border-[var(--base-border-opaque)] py-6 text-center text-xs text-[var(--base-content-tertiary)] bg-white">
+        <p className="font-medium">Hệ Thống Quản Lý Lâm Sàng Mày Đay (DrMayDay) • Bệnh Viện Da Liễu Trung Ương</p>
+        <p className="mt-1">Quy chuẩn chẩn đoán WAO 2020 & EAACI/GA2LEN • Đề tài Nghiên cứu Khoa học Cấp Bộ</p>
+      </footer>
     </div>
   );
 }

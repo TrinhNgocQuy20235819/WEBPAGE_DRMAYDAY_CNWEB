@@ -6,6 +6,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [bhyt, setBhyt] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = (e) => {
@@ -14,64 +15,94 @@ export default function RegisterPage() {
       toast.error("Vui lòng điền đầy đủ các thông tin bắt buộc!");
       return;
     }
-    toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+    toast.success("Đăng ký hồ sơ bệnh nhân thành công! Vui lòng đăng nhập.");
     navigate("/login");
   };
 
   return (
-    <form onSubmit={handleRegister} className="space-y-4">
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-          Họ và Tên
-        </label>
-        <input
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          placeholder="Nguyễn Văn A"
-          className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+    <div className="space-y-6">
+      <div className="lg:hidden flex items-center gap-3 mb-6">
+        <img src="/images/logo/drmayday-logo.png" alt="DrMayDay" className="h-10 w-auto object-contain" />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-          Số Điện Thoại
-        </label>
-        <input
-          type="text"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="0912345678"
-          className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <h2 className="text-2xl font-bold text-[var(--base-brand-navy)] tracking-tight">Đăng Ký Hồ Sơ Khám</h2>
+        <p className="text-xs text-[var(--base-content-secondary)] mt-1">
+          Khởi tạo hồ sơ bệnh án điện tử tại Bệnh viện Da liễu Trung ương
+        </p>
       </div>
 
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-          Mật Khẩu
-        </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      <form onSubmit={handleRegister} className="space-y-4">
+        <div>
+          <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
+            Họ và tên bệnh nhân *
+          </label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="VD: Nguyễn Thị Mai"
+            className="base-input text-xs"
+            required
+          />
+        </div>
 
-      <button
-        type="submit"
-        className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors shadow-md mt-2"
-      >
-        Đăng Ký Tài Khoản
-      </button>
+        <div>
+          <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
+            Số điện thoại liên hệ *
+          </label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="VD: 0912 345 678"
+            className="base-input text-xs font-mono"
+            required
+          />
+        </div>
 
-      <div className="text-center text-xs text-slate-500 pt-2">
+        <div>
+          <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
+            Số thẻ BHYT (nếu có)
+          </label>
+          <input
+            type="text"
+            value={bhyt}
+            onChange={(e) => setBhyt(e.target.value)}
+            placeholder="VD: DN4010123456789"
+            className="base-input text-xs font-mono uppercase"
+          />
+        </div>
+
+        <div>
+          <label className="base-label-sm text-[var(--base-content-secondary)] block mb-1">
+            Mật khẩu khởi tạo *
+          </label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="base-input text-xs"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="base-btn base-btn-primary w-full py-3 text-sm font-bold shadow-sm justify-center cursor-pointer mt-2"
+        >
+          <span className="isax icon-user-add text-base"></span>
+          <span>Đăng Ký Tài Khoản Bệnh Nhân</span>
+        </button>
+      </form>
+
+      <div className="pt-4 border-t border-[var(--base-border-opaque)] text-center text-xs text-[var(--base-content-secondary)]">
         Đã có tài khoản?{" "}
-        <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+        <Link to="/login" className="text-[var(--base-brand-blue)] font-bold hover:underline">
           Đăng nhập ngay
         </Link>
       </div>
-    </form>
+    </div>
   );
 }

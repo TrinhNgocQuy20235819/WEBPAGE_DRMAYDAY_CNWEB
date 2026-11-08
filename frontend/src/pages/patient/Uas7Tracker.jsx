@@ -1,95 +1,254 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { INITIAL_UAS7_SCORES } from "../../services/mockData";
 
 export default function Uas7Tracker() {
-  const [iss7, setIss7] = useState(1);
-  const [hss7, setHss7] = useState(1);
+  const [activeTab, setActiveTab] = useState("uas7"); // 'uas7' or 'aas7'
+  const [scores, setScores] = useState(INITIAL_UAS7_SCORES);
+  const [hss, setHss] = useState(1); // 0, 1, 2, 3
+  const [iss, setIss] = useState(2); // 0, 1, 2, 3
+  const [scoreDate, setScoreDate] = useState("2026-03-08");
+
+  const dailyScore = hss + iss;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const total = Number(iss7) + Number(hss7);
-    toast.success(`Đã lưu điểm UAS7 hôm nay: ${total}/6 điểm! (Mock test)`);
+    const newEntry = {
+      score_date: scoreDate,
+      daily_score: dailyScore,
+      hss7: hss,
+      iss7: iss,
+    };
+    setScores([...scores.filter((s) => s.score_date !== scoreDate), newEntry]);
+    toast.success(`Đã ghi nhận điểm UAS ngày ${scoreDate}: ${dailyScore} / 6 điểm!`);
+  };
+
+  const getSeverity = (daily) => {
+    if (daily <= 2) return { label: "Kiểm soát tốt", class: "base-tag-positive" };
+    if (daily <= 4) return { label: "Mức độ nhẹ/vừa", class: "base-tag-warning" };
+    return { label: "Mức độ nặng", class: "base-tag-negative" };
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-slate-900">Chấm Điểm Thang Đo UAS7 Hôm Nay</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Urticaria Activity Score 7 - Đánh giá mức độ sẩn phù và ngứa trong 24 giờ.
-        </p>
+    <div className="space-y-6">
+      {/* Hero Banner */}
+      <div className="base-hero">
+        <div className="base-hero-content">
+          <div>
+            <div className="flex items-center gap-2 mb-2 text-xs text-white/60">
+              <Link to="/patient" className="hover:text-white transition">Trang chủ</Link>
+              <span className="isax icon-arrow-right-3 text-[10px]"></span>
+              <span className="text-white/90 font-medium">Chấm điểm hoạt tính</span>
+            </div>
+            <h1 className="base-hero-title">Nhật Ký Chấm Điểm UAS7 Hằng Ngày</h1>
+            <p className="base-hero-subtitle">
+              <span className="isax icon-chart text-sm"></span>
+              <span>Theo dõi mức độ sẩn phù và ngứa trong 24 giờ theo tiêu chuẩn quốc tế EAACI/GA2LEN</span>
+            </p>
+          </div>
+          <div className="base-hero-actions">
+            <Link to="/patient" className="base-btn-hero-primary">
+              <span className="isax icon-arrow-left-2 text-sm"></span>
+              <span>Về Trang Chủ</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Điểm sẩn iss7 */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
-            1. Mức độ sẩn phù (Hives / ISS7: 0 - 3)
-          </label>
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { val: 0, label: "0: Không có nốt sẩn" },
-              { val: 1, label: "1: Nhẹ (< 20 nốt/24h)" },
-              { val: 2, label: "2: Vừa (20-50 nốt/24h)" },
-              { val: 3, label: "3: Nặng (> 50 nốt/24h)" },
-            ].map((opt) => (
-              <button
-                type="button"
-                key={opt.val}
-                onClick={() => setIss7(opt.val)}
-                className={`p-3 rounded-xl border text-left text-xs transition-all ${
-                  iss7 === opt.val
-                    ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 font-semibold shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 text-slate-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Điểm ngứa hss7 */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
-            2. Mức độ ngứa ngáy (Itch / HSS7: 0 - 3)
-          </label>
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { val: 0, label: "0: Không ngứa" },
-              { val: 1, label: "1: Nhẹ (Không khó chịu)" },
-              { val: 2, label: "2: Vừa (Khó chịu nhưng chưa ảnh hưởng sinh hoạt)" },
-              { val: 3, label: "3: Nặng (Rất khó chịu, mất ngủ)" },
-            ].map((opt) => (
-              <button
-                type="button"
-                key={opt.val}
-                onClick={() => setHss7(opt.val)}
-                className={`p-3 rounded-xl border text-left text-xs transition-all ${
-                  hss7 === opt.val
-                    ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 font-semibold shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 text-slate-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tổng điểm */}
-        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-600">Tổng điểm UAS hôm nay:</span>
-          <span className="text-2xl font-bold text-indigo-600">{Number(iss7) + Number(hss7)} / 6</span>
-        </div>
-
+      {/* Tabs UAS7 vs AAS7 */}
+      <div className="base-tab-nav overflow-x-auto">
         <button
-          type="submit"
-          className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors shadow-md"
+          onClick={() => setActiveTab("uas7")}
+          className={`base-tab-item ${activeTab === "uas7" ? "is-active" : ""}`}
         >
-          Xác Nhận Lưu Điểm UAS7
+          <span className="isax icon-chart-21 text-base"></span>
+          <span>Phụ Lục A: Thang Đo Mày Đay (UAS7: 0–42đ)</span>
         </button>
-      </form>
+        <button
+          onClick={() => setActiveTab("aas7")}
+          className={`base-tab-item ${activeTab === "aas7" ? "is-active" : ""}`}
+        >
+          <span className="isax icon-danger text-base text-[var(--base-warning-primary)]"></span>
+          <span>Phụ Lục B: Thang Đo Phù Mạch (AAS7)</span>
+        </button>
+      </div>
+
+      {activeTab === "uas7" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Form ghi nhận */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="base-card p-6">
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--base-border-opaque)] mb-5">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900 uppercase">Ghi Nhận Chỉ Số Hôm Nay</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Đánh giá trung thực tình trạng trong 24 giờ qua</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="isax icon-calendar text-sm text-gray-400"></span>
+                  <input
+                    type="date"
+                    value={scoreDate}
+                    onChange={(e) => setScoreDate(e.target.value)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg border border-[var(--base-border-opaque)] font-mono font-semibold"
+                  />
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 1. Nốt sẩn phù (HSS) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-gray-900">
+                      1. Số lượng nốt sẩn phù (Hives Severity Score - HSS)
+                    </label>
+                    <span className="text-xs font-mono font-bold text-[var(--base-brand-blue)]">{hss} / 3</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {[
+                      { val: 0, title: "0: Không có", desc: "Không xuất hiện nốt sẩn nào" },
+                      { val: 1, title: "1: Nhẹ", desc: "Dưới 20 nốt sẩn / 24 giờ" },
+                      { val: 2, title: "2: Vừa", desc: "Từ 20 đến 50 nốt sẩn / 24 giờ" },
+                      { val: 3, title: "3: Nặng", desc: "Trên 50 nốt hoặc các mảng lớn" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.val}
+                        onClick={() => setHss(opt.val)}
+                        className={`base-selection-card cursor-pointer ${
+                          hss === opt.val ? "is-selected" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="hss"
+                          checked={hss === opt.val}
+                          onChange={() => setHss(opt.val)}
+                          className="mt-0.5 h-4 w-4 text-[var(--base-brand-blue)]"
+                        />
+                        <div>
+                          <div className="text-xs font-bold text-gray-900">{opt.title}</div>
+                          <div className="text-[11px] text-gray-500">{opt.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Cảm giác ngứa (ISS) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-gray-900">
+                      2. Mức độ cảm giác ngứa (Itch Severity Score - ISS)
+                    </label>
+                    <span className="text-xs font-mono font-bold text-[var(--base-brand-blue)]">{iss} / 3</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {[
+                      { val: 0, title: "0: Không ngứa", desc: "Hoàn toàn dễ chịu" },
+                      { val: 1, title: "1: Ngứa nhẹ", desc: "Có cảm giác ngứa nhưng không gây phiền toái" },
+                      { val: 2, title: "2: Ngứa vừa", desc: "Gây khó chịu nhưng không ảnh hưởng sinh hoạt" },
+                      { val: 3, title: "3: Ngứa dữ dội", desc: "Rất khó chịu, ảnh hưởng giấc ngủ & sinh hoạt" },
+                    ].map((opt) => (
+                      <div
+                        key={opt.val}
+                        onClick={() => setIss(opt.val)}
+                        className={`base-selection-card cursor-pointer ${
+                          iss === opt.val ? "is-selected" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="iss"
+                          checked={iss === opt.val}
+                          onChange={() => setIss(opt.val)}
+                          className="mt-0.5 h-4 w-4 text-[var(--base-brand-blue)]"
+                        />
+                        <div>
+                          <div className="text-xs font-bold text-gray-900">{opt.title}</div>
+                          <div className="text-[11px] text-gray-500">{opt.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tổng điểm ngày & Button */}
+                <div className="p-4 rounded-xl bg-[var(--base-bg-surface-alt)] border border-[var(--base-border-opaque)] flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-gray-500 block">Tổng điểm ngày (HSS + ISS):</span>
+                    <span className="text-2xl font-mono font-extrabold text-[var(--base-brand-navy)]">
+                      {dailyScore} <span className="text-xs font-normal text-gray-500">/ 6 điểm</span>
+                    </span>
+                  </div>
+                  <button
+                    type="submit"
+                    className="base-btn base-btn-primary base-btn-default cursor-pointer font-bold shadow-sm"
+                  >
+                    <span className="isax icon-tick-circle text-base"></span>
+                    <span>Lưu Kết Quả Hôm Nay</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Cột phải: Lịch sử & Thống kê tuần */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="base-card p-5">
+              <h3 className="text-xs font-bold text-gray-900 uppercase mb-3">Lịch Sử 7 Ngày Gần Nhất</h3>
+              <div className="divide-y divide-[var(--base-border-opaque)]">
+                {scores.map((s) => (
+                  <div key={s.score_date} className="py-2.5 flex items-center justify-between">
+                    <div>
+                      <div className="font-mono text-xs font-bold text-gray-900">
+                        {s.score_date}
+                      </div>
+                      <div className="text-[11px] text-gray-500">
+                        Sẩn phù (HSS): {s.hss7}/3 • Ngứa (ISS): {s.iss7}/3
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono text-sm font-bold text-[var(--base-brand-navy)]">
+                        {s.daily_score} / 6
+                      </div>
+                      <span className={`base-tag ${getSeverity(s.daily_score).class} text-[10px]`}>
+                        {getSeverity(s.daily_score).label}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <span className="isax-b icon-info-circle text-sm text-[var(--base-brand-blue)]"></span>
+                <span>Ý nghĩa lâm sàng của thang điểm UAS7:</span>
+              </div>
+              <p className="text-[11px] text-blue-800 leading-relaxed">
+                UAS7 = Tổng điểm 7 ngày liên tiếp (0–42 điểm). Điểm dưới 6 biểu thị bệnh đã kiểm soát tốt; từ 28 điểm trở lên biểu thị đợt bùng phát nặng cần bác sĩ điều chỉnh phác đồ tăng liều kháng H1 hoặc xem xét sinh học Omalizumab.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Tab Phù mạch AAS7 */
+        <div className="base-card p-8 text-center max-w-2xl mx-auto space-y-4">
+          <div className="h-14 w-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-2xl">
+            <span className="isax-b icon-danger"></span>
+          </div>
+          <h2 className="text-base font-bold text-gray-900">Thang Điểm Hoạt Tính Phù Mạch (AAS7)</h2>
+          <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
+            Áp dụng cho các bệnh nhân có biểu hiện phù môi, mí mắt, bộ phận sinh dục hoặc các mô mềm. Vui lòng liên hệ bác sĩ nếu xuất hiện phù nề vùng thanh quản gây khó thở.
+          </p>
+          <div className="p-4 rounded-xl bg-[var(--base-bg-surface-alt)] border border-[var(--base-border-opaque)] text-left text-xs space-y-2">
+            <div className="font-bold text-gray-900">Đợt phù mạch gần nhất:</div>
+            <p className="text-gray-600">Chưa ghi nhận đợt phù nề mô sâu nào trong 7 ngày qua.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
